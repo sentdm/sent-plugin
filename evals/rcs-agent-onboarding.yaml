@@ -1,0 +1,17 @@
+skill: rcs-agent-onboarding
+cases:
+  - query: "What does my RBM agent need before carrier approval?"
+    expect: trigger
+    rationale: Direct RBM agent + carrier-approval ask — the launch-review path this skill covers.
+  - query: "Walk me through onboarding a new tenant for RCS Business Messaging on Sent."
+    expect: trigger
+    rationale: Tenant onboarding for RCS with Sent context. Matches "onboarding a tenant for RCS" trigger.
+  - query: "Should I declare rich cards and carousels as agent capabilities, or keep it minimal?"
+    expect: trigger
+    rationale: Capability-declaration decision specific to RBM agent setup — covered explicitly in this skill.
+  - query: "Help me set up an OAuth agent in Rails."
+    expect: no_trigger
+    rationale: '"Agent" here means an OAuth client/service-account abstraction in a Rails app, not an RBM agent. No RCS, no RBM, no carrier context.'
+  - query: "Our RCS messages are dropping — most recipients fall back to SMS. What's wrong?"
+    expect: ambiguous
+    rationale: Could be capability mismatch (rcs-agent-onboarding — agent not launched in that carrier, capability check) OR a delivery-funnel analysis (messaging-performance-analyzer). Prefer messaging-performance-analyzer first to localize the broken stage; route here if the diagnosis points to agent launch state.

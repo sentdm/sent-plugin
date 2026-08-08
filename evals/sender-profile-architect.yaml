@@ -1,0 +1,17 @@
+skill: sender-profile-architect
+cases:
+  - query: "How should I model brands and tenants when I have 50 merchants sending through Sent?"
+    expect: trigger
+    rationale: Canonical multi-tenant data-modeling question with explicit Sent context — exactly what this skill plans.
+  - query: "How do I route an inbound WhatsApp webhook to the right tenant in my multi-tenant app?"
+    expect: trigger
+    rationale: Webhook fan-out + tenant scoping — verbatim "Use when" trigger in the description.
+  - query: "What's the right way to scope rate limits per Sender Profile across SMS, WhatsApp, and RCS?"
+    expect: trigger
+    rationale: Per-channel rate-limit accounting tied to the Sender Profile abstraction — core scope of this skill.
+  - query: "Help me design a database schema for a CRM."
+    expect: no_trigger
+    rationale: Generic schema-design question with no Sent / messaging / multi-tenant-sender context. Belongs to a general data-modeling lifecycle skill, not this domain skill.
+  - query: "We have a single WhatsApp number for all our customers — should we split it per tenant?"
+    expect: ambiguous
+    rationale: Pooled-vs-siloed trade-off is core to sender-profile-architect, BUT if the user actually wants Embedded Signup to provision a per-tenant WABA, that's waba-embedded-signup. Route here if the question is "how do I architect this"; route to embedded-signup if it's "how do I onboard each tenant's own WABA".

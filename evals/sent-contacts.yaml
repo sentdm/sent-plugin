@@ -1,0 +1,17 @@
+skill: sent-contacts
+cases:
+  - query: "List the Sent contacts matching this domain and show only their masked phone numbers."
+    expect: trigger
+    rationale: Filtered contact discovery is a direct contacts.list workflow.
+  - query: "Import these twelve contacts into Sent after showing me exactly what will be created."
+    expect: trigger
+    rationale: Bulk contact creation belongs here and requires the mutation preview and confirmation gate.
+  - query: "Delete contact con_842, but fetch it first so I can verify the target."
+    expect: trigger
+    rationale: Exact-target retrieval followed by a confirmed contacts.delete is the skill's destructive workflow.
+  - query: "Write a compliant WhatsApp utility template for an order update."
+    expect: no_trigger
+    rationale: Template authoring belongs to waba-template-author, not contact operations.
+  - query: "Build an opted-in campaign audience and message everyone in it."
+    expect: ambiguous
+    rationale: Contact selection may use this skill, while consent validation and the confirmed send are separate messaging or compliance work.

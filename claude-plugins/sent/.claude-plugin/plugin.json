@@ -1,0 +1,23 @@
+{
+  "name": "sent",
+  "version": "0.1.0",
+  "description": "Official Sent agent plugin for messaging, contacts, templates, analytics, account readiness, and SMS, WhatsApp, and RCS workflows.",
+  "author": {
+    "name": "Sent",
+    "url": "https://sent.dm"
+  },
+  "homepage": "https://docs.sent.dm/start/llm-docs/mcp-server",
+  "repository": "https://github.com/sent-dm/sent-plugin",
+  "license": "MIT",
+  "keywords": [
+    "sent",
+    "messaging",
+    "sms",
+    "whatsapp",
+    "rcs",
+    "mcp"
+  ],
+  "commands": "./.claude/commands",
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json"
+}

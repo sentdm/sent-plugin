@@ -1,0 +1,17 @@
+skill: sent-templates
+cases:
+  - query: "List approved English templates in my active Sent Sender Profile."
+    expect: trigger
+    rationale: Filtered discovery of existing records maps to templates.list.
+  - query: "Get the exact Sent template named shipping_update and show its status."
+    expect: trigger
+    rationale: Name-based retrieval maps to templates.get_by_name.
+  - query: "Delete template tpl_91 after fetching it and showing me the exact target."
+    expect: trigger
+    rationale: Existing-template deletion with a target fetch and confirmation is this skill's mutation workflow.
+  - query: "Design the UI for customers to create and validate their own templates."
+    expect: no_trigger
+    rationale: Product UI design belongs to template-builder-ui, not MCP record operations.
+  - query: "Rewrite my WhatsApp template so Meta will approve it, then find the existing version in Sent."
+    expect: ambiguous
+    rationale: Content authoring belongs to waba-template-author while retrieval of the current Sent record belongs here.

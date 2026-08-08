@@ -1,0 +1,17 @@
+skill: messaging-performance-analyzer
+cases:
+  - query: "My WhatsApp messages aren't getting delivered, where do I start?"
+    expect: trigger
+    rationale: Direct delivery-investigation query for WhatsApp; matches "messages aren't going through" trigger phrase in the description.
+  - query: "Why did our SMS delivery rate suddenly drop yesterday for the order-update campaign?"
+    expect: trigger
+    rationale: Sudden delivery-rate change scoped to channel + campaign — the canonical cohort-based investigation this skill is built for.
+  - query: "Help me read this MDR — I'm seeing a spike in Meta error 131047"
+    expect: trigger
+    rationale: Explicit MDR keyword + WhatsApp-specific status-code spike. Exactly the per-channel status-code triage path.
+  - query: "Compare AWS SNS vs Twilio pricing for transactional SMS"
+    expect: no_trigger
+    rationale: Vendor/pricing comparison, not delivery-funnel analysis on Sent. No MDR, no funnel, no Sent-tenant context.
+  - query: "How do I build a dashboard widget that shows delivered vs read rate?"
+    expect: ambiguous
+    rationale: Mentions delivered/read rate (trigger keywords) but the actual ask is UI/product work, not an analysis. template-builder-ui is the wrong fit too; route to a generic dashboard skill or ask the user whether they want analysis methodology vs implementation.

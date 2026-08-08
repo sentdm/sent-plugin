@@ -1,0 +1,35 @@
+# Operating-system and editor metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage/
+
+# Local configuration and logs
+.env
+.env.*
+!.env.example
+*.log
+.claude/settings.local.json
+
+# Credentials and private key material
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Build and release artifacts
+build/
+dist/
+*.egg-info/
+packages/*.zip

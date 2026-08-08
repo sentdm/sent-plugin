@@ -1,0 +1,43 @@
+{
+  "name": "sent",
+  "version": "0.1.0",
+  "description": "Official Sent agent plugin for messaging, contacts, templates, analytics, account readiness, and SMS, WhatsApp, and RCS workflows.",
+  "author": {
+    "name": "Sent",
+    "url": "https://sent.dm"
+  },
+  "homepage": "https://docs.sent.dm/start/llm-docs/mcp-server",
+  "repository": "https://github.com/sent-dm/sent-plugin",
+  "license": "MIT",
+  "keywords": [
+    "sent",
+    "messaging",
+    "sms",
+    "whatsapp",
+    "rcs",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Sent",
+    "shortDescription": "Business messaging workflows",
+    "longDescription": "Use Sent skills and its remote MCP server for safe messaging, contacts, templates, analytics, account readiness, SMS, WhatsApp, and RCS workflows.",
+    "developerName": "Sent",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://www.sent.dm",
+    "privacyPolicyURL": "https://www.sent.dm/en/legal/privacy-policy",
+    "termsOfServiceURL": "https://www.sent.dm/en/legal/terms-of-service",
+    "logo": "./assets/logo.svg",
+    "composerIcon": "./assets/logo.svg",
+    "defaultPrompt": [
+      "Check whether my account is ready to send and flag anything blocking me.",
+      "Summarize message volume and deliverability for the last 30 days.",
+      "Find an approved template, preview an SMS to a contact, and ask before sending."
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+skill: template-builder-ui
+cases:
+  - query: "I'm designing a UI for our tenants to submit WhatsApp templates — what should the editor look like?"
+    expect: trigger
+    rationale: Tenant-facing WhatsApp template editor UI — verbatim scope of this skill.
+  - query: "Build me a live WhatsApp-style preview component with header / body / footer / buttons."
+    expect: trigger
+    rationale: Component editor + WhatsApp preview — explicit "Use when" triggers in the description.
+  - query: "How do I port Meta's template-submission rules into client-side form validation?"
+    expect: trigger
+    rationale: Client-side validation of Meta submission rules — explicitly called out in the description.
+  - query: "Help me build a Handlebars template for a transactional email."
+    expect: no_trigger
+    rationale: Handlebars / email templating is generic web templating, not WhatsApp template authoring UI. "Template" keyword overlap only.
+  - query: "What's the right copy for a marketing-category WhatsApp template promoting a flash sale?"
+    expect: ambiguous
+    rationale: This is template content / policy authoring (waba-template-author), not UI design. Route to waba-template-author; only land here if the user is asking how to wire that copy into the builder form.

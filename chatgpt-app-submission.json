@@ -1,0 +1,308 @@
+{
+  "$schema": "https://developers.openai.com/plugins/schemas/chatgpt-app-submission.v1.json",
+  "schema_version": 1,
+  "app_info": {
+    "display_name": "Sent",
+    "subtitle": "Business messaging workflows",
+    "description": "Connect your Sent account to send and track SMS and WhatsApp messages, manage contacts and templates, look up phone-number network details, and review account readiness, balance, and messaging analytics.",
+    "category": "BUSINESS"
+  },
+  "tools": {
+    "account.get": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the authenticated Sent account snapshot without creating, updating, or deleting account data.",
+        "open_world_justification": "Reads only the authenticated account's private Sent data and does not interact with public or third-party systems.",
+        "destructive_justification": "Does not delete, overwrite, revoke access, send communications, or perform another irreversible action."
+      }
+    },
+    "messages.send": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Queues messages for one or more recipients and therefore changes Sent messaging state.",
+        "open_world_justification": "Transmits messages through supported channels to recipients outside Sent.",
+        "destructive_justification": "Sending a message is an irreversible external communication once it has been queued."
+      }
+    },
+    "messages.get": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves one customer-scoped stored message without changing message or delivery state.",
+        "open_world_justification": "Reads private message data from Sent without contacting recipients or changing third-party systems.",
+        "destructive_justification": "Does not delete, overwrite, send, or otherwise alter the selected message."
+      }
+    },
+    "messages.activities.list": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads the customer-scoped lifecycle activity timeline for an existing message without changing it.",
+        "open_world_justification": "Retrieves private delivery activity from Sent without contacting external recipients or services.",
+        "destructive_justification": "Does not delete, overwrite, resend, or change the delivery lifecycle."
+      }
+    },
+    "contacts.list": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists customer-scoped contacts without creating, updating, or deleting contact records.",
+        "open_world_justification": "Reads private contact data from Sent and does not transmit or publish it externally.",
+        "destructive_justification": "Does not delete, overwrite, restore, or otherwise change any contact."
+      }
+    },
+    "contacts.get": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves one customer-scoped contact without changing contact or consent state.",
+        "open_world_justification": "Reads a private Sent contact and does not interact with public or third-party systems.",
+        "destructive_justification": "Does not delete, overwrite, restore, or otherwise change the contact."
+      }
+    },
+    "contacts.create_many": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates or restores contact associations and therefore changes stored customer contact data.",
+        "open_world_justification": "May transmit supplied phone numbers to external network-capability lookup services while creating contacts.",
+        "destructive_justification": "Creates or restores contacts but does not delete records, revoke access, or send messages."
+      }
+    },
+    "contacts.delete": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Soft-deletes a customer-contact association and therefore changes stored Sent data.",
+        "open_world_justification": "Changes only the authenticated customer's private Sent contact association without publishing externally.",
+        "destructive_justification": "Removes the selected contact association from active use."
+      }
+    },
+    "contacts.message_summary": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Returns aggregate message counts and outcomes for one customer-scoped contact without changing data.",
+        "open_world_justification": "Reads private Sent aggregates without contacting the person or changing an external system.",
+        "destructive_justification": "Does not delete, overwrite, send, or modify contact or message records."
+      }
+    },
+    "templates.list": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists customer-accessible templates without creating, updating, or deleting them.",
+        "open_world_justification": "Reads templates from private Sent storage without publishing or transmitting their content externally.",
+        "destructive_justification": "Does not delete, overwrite, submit, or otherwise change a template."
+      }
+    },
+    "templates.get": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves one customer-accessible template by identifier without modifying it.",
+        "open_world_justification": "Reads a template from private Sent storage without publishing or transmitting it externally.",
+        "destructive_justification": "Does not delete, overwrite, submit, or otherwise change the template."
+      }
+    },
+    "templates.get_by_name": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves one customer-accessible template by display name without modifying it.",
+        "open_world_justification": "Reads a template from private Sent storage without publishing or transmitting it externally.",
+        "destructive_justification": "Does not delete, overwrite, submit, or otherwise change the template."
+      }
+    },
+    "templates.delete": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Deletes or soft-deletes a customer-owned template and therefore changes stored Sent data.",
+        "open_world_justification": "Changes only private Sent template state and does not delete content from an external platform.",
+        "destructive_justification": "Can permanently remove an unreferenced template or make a referenced template unavailable for future use."
+      }
+    },
+    "numbers.lookup": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Performs a paid provider lookup and increments an internal daily quota, changing usage state.",
+        "open_world_justification": "Transmits the supplied phone number to an external number-intelligence provider.",
+        "destructive_justification": "Returns network information without deleting, overwriting, revoking access, or sending a message."
+      }
+    },
+    "dashboard.messages_sent": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads customer-scoped message-volume aggregates for a reporting window without changing message data.",
+        "open_world_justification": "Retrieves private Sent analytics without publishing results or contacting external systems.",
+        "destructive_justification": "Does not delete, overwrite, send, or otherwise change messages or analytics."
+      }
+    },
+    "dashboard.deliverability": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads the customer's aggregate deliverability metric without changing messages or delivery state.",
+        "open_world_justification": "Retrieves private Sent analytics without publishing results or contacting external systems.",
+        "destructive_justification": "Does not delete, overwrite, resend, or otherwise change any message."
+      }
+    },
+    "dashboard.contacts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads the customer's aggregate contact count without changing contact records.",
+        "open_world_justification": "Retrieves a private Sent aggregate without publishing results or contacting third-party systems.",
+        "destructive_justification": "Does not delete, overwrite, restore, or otherwise change any contact."
+      }
+    },
+    "balance.get": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves current and effective balance values without permitting credits, debits, or payment actions.",
+        "open_world_justification": "Reads private balance data from Sent without initiating a payment or contacting a financial system.",
+        "destructive_justification": "Does not debit funds, transfer money, change billing settings, or perform another irreversible action."
+      }
+    },
+    "onboarding.status": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the latest customer onboarding state without advancing or modifying onboarding.",
+        "open_world_justification": "Reads private onboarding data from Sent without submitting information to an external party.",
+        "destructive_justification": "Does not approve, reject, submit, delete, or otherwise change onboarding data."
+      }
+    }
+  },
+  "test_cases": [
+    {
+      "description": "Review account readiness before attempting a messaging workflow.",
+      "user_prompt": "Summarize whether my Sent account is ready to send, including the account type, current onboarding status, and effective balance.",
+      "file_attachment_urls": null,
+      "tools_triggered": "account.get, onboarding.status, balance.get",
+      "expected_output": "Returns an authorized account-scoped readiness summary that distinguishes account identity, onboarding status, and available balance.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Find and inspect customer-accessible templates using both name and identifier lookups.",
+      "user_prompt": "List my approved message templates, then inspect one returned template by its displayed name and identifier.",
+      "file_attachment_urls": null,
+      "tools_triggered": "templates.list, templates.get_by_name, templates.get",
+      "expected_output": "Returns matching template details from the authenticated account without changing any template.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Create, inspect, summarize, and remove a disposable sandbox contact.",
+      "user_prompt": "Using the dedicated sandbox phone number in the review account, prepare one new contact, show me the exact number before creation, inspect its message summary, and then ask separately before deleting it.",
+      "file_attachment_urls": null,
+      "tools_triggered": "contacts.create_many, contacts.list, contacts.get, contacts.message_summary, contacts.delete",
+      "expected_output": "Requests confirmation immediately before creation and deletion, keeps phone-number output minimized, and reports each account-scoped result.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Send one sandbox message and distinguish acceptance from delivery.",
+      "user_prompt": "Using an approved test template and the dedicated sandbox recipient, prepare one SMS, show me the exact payload for confirmation, send it, and then check its delivery activity.",
+      "file_attachment_urls": null,
+      "tools_triggered": "templates.get_by_name, messages.send, messages.get, messages.activities.list",
+      "expected_output": "Requests confirmation immediately before sending, reports the message as queued or accepted rather than delivered, and then returns the latest lifecycle status.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Run a live number lookup and review account messaging analytics.",
+      "user_prompt": "Look up the dedicated sandbox phone number, then summarize message volume, deliverability, and contact count for my Sent account.",
+      "file_attachment_urls": null,
+      "tools_triggered": "numbers.lookup, dashboard.messages_sent, dashboard.deliverability, dashboard.contacts",
+      "expected_output": "Discloses that the phone number is sent to an external lookup provider and returns customer-scoped lookup and analytics results.",
+      "expected_output_url": null
+    }
+  ],
+  "negative_test_cases": [
+    {
+      "description": "Do not invoke Sent for message-copy drafting without an account action.",
+      "user_prompt": "Write a concise promotional SMS announcing a summer sale, but do not send it.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "Provides writing help without invoking the Sent app because no account operation was requested.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Do not invoke Sent for general legal or regulatory advice.",
+      "user_prompt": "What are the general consent requirements for business SMS marketing in the United States?",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "Answers cautiously from appropriate general knowledge or sources without invoking Sent account tools.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Do not invoke Sent for third-party provider comparison research.",
+      "user_prompt": "Compare the public RCS pricing and features of Twilio and Sinch.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "Handles the research request without invoking Sent because no supported Sent account workflow was requested.",
+      "expected_output_url": null
+    }
+  ]
+}

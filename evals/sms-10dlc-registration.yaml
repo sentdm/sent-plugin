@@ -1,0 +1,17 @@
+skill: sms-10dlc-registration
+cases:
+  - query: "How do I register a brand and campaign with TCR?"
+    expect: trigger
+    rationale: Direct TCR brand+campaign registration ask — the primary path this skill walks.
+  - query: "Our 10DLC campaign keeps getting filtered by T-Mobile — what's wrong?"
+    expect: trigger
+    rationale: Carrier filtering + 10DLC keywords from the description; this skill covers vetting-score and rejection-debugging.
+  - query: "What use-case category should I pick for shipping notifications on TCR?"
+    expect: trigger
+    rationale: Campaign use-case classification — covered explicitly by this skill.
+  - query: "Help me with European SMS sender ID registration."
+    expect: no_trigger
+    rationale: TCR / 10DLC is US-only. EU sender-ID registration is a different regulatory regime (e.g. UK MEF, France's "Numérotation") and out of scope.
+  - query: "Why is our SMS throughput so low even after we registered our brand?"
+    expect: ambiguous
+    rationale: Could be vetting-score / campaign-throttle (sms-10dlc-registration) or per-cohort delivery analysis (messaging-performance-analyzer). Start with messaging-performance-analyzer to localize whether throttling is the broken stage, then route here if the diagnosis is TCR vetting or campaign misclassification.

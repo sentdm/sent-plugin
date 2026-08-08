@@ -1,0 +1,17 @@
+skill: sent-analytics
+cases:
+  - query: "How many messages did we send last week in America/New_York?"
+    expect: trigger
+    rationale: A date- and timezone-bounded dashboard volume query maps to dashboard.messages_sent.
+  - query: "Look up whether this masked number is mobile-capable, without treating that as consent."
+    expect: trigger
+    rationale: Number capability lookup is an explicit read-only analytics workflow with a consent caveat.
+  - query: "Compare Sent deliverability this month with last month using UTC for both periods."
+    expect: trigger
+    rationale: Aggregate deliverability comparison with a fixed timezone belongs here.
+  - query: "Delete a duplicate contact from Sent."
+    expect: no_trigger
+    rationale: Destructive contact management belongs to sent-contacts.
+  - query: "Delivery dropped yesterday; identify the failing carrier codes and explain the root cause."
+    expect: ambiguous
+    rationale: The dashboard can establish the aggregate change, but record-level error diagnosis belongs to messaging-performance-analyzer.

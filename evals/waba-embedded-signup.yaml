@@ -1,0 +1,17 @@
+skill: waba-embedded-signup
+cases:
+  - query: "Walk me through connecting a customer's WhatsApp via Embedded Signup."
+    expect: trigger
+    rationale: Direct embedded-signup onboarding ask — canonical scope of this skill.
+  - query: "I'm getting the WA_EMBEDDED_SIGNUP postMessage but the code-for-token exchange is failing."
+    expect: trigger
+    rationale: Stuck-flow debugging at the exact event boundary this skill covers. Mentions the sessionInfo event name verbatim.
+  - query: "How do I set up Facebook Login for Business as a Tech Provider on Sent?"
+    expect: trigger
+    rationale: FBL + Tech Provider role — both verbatim triggers in the description.
+  - query: "Help me implement Sign in with Google for my Next.js app."
+    expect: no_trigger
+    rationale: Generic OAuth / social sign-in, not Meta's Embedded Signup. No WhatsApp / WABA / Meta context.
+  - query: "After Embedded Signup completes, how do I subscribe to the right webhooks and start sending?"
+    expect: trigger
+    rationale: Post-signup webhook subscription is explicitly in scope ("post-signup webhook subscription"). Not ambiguous — same skill owns the full end-to-end.

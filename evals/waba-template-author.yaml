@@ -1,0 +1,17 @@
+skill: waba-template-author
+cases:
+  - query: "My WhatsApp utility template was rejected for promotional content — how do I fix it?"
+    expect: trigger
+    rationale: Rejected WhatsApp template + category-policy issue — exactly the rejection-revision path this skill covers.
+  - query: "Should this abandoned-cart reminder be classified as utility or marketing?"
+    expect: trigger
+    rationale: Ambiguous category classification — the marketing-surcharge avoidance scenario in the description.
+  - query: "Draft a WhatsApp template for a one-time password (OTP) message."
+    expect: trigger
+    rationale: OTP / authentication template authoring — explicitly listed use case in the description.
+  - query: "Help me draft a Jinja2 email template for our welcome series."
+    expect: no_trigger
+    rationale: Jinja2 / email templating is generic templating, not WABA template authoring. "Template" keyword overlap only.
+  - query: "Design the UI flow for tenants to pick a template category in our app."
+    expect: ambiguous
+    rationale: UI flow design is template-builder-ui's scope. The category-picker copy / policy guidance is waba-template-author's. Route to template-builder-ui for the UX; cross-reference here for the underlying policy rules.

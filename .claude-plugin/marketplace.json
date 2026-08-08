@@ -1,0 +1,19 @@
+{
+  "name": "sent",
+  "owner": {
+    "name": "Sent",
+    "url": "https://sent.dm"
+  },
+  "metadata": {
+    "description": "Official Sent skills and remote MCP integration.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "sent",
+      "source": "./claude-plugins/sent",
+      "description": "Official Sent agent plugin for messaging, contacts, templates, analytics, account readiness, and SMS, WhatsApp, and RCS workflows.",
+      "category": "Productivity"
+    }
+  ]
+}

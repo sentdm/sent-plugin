@@ -1,0 +1,17 @@
+skill: sent-account-readiness
+cases:
+  - query: "Is my currently authorized Sent account ready to send?"
+    expect: trigger
+    rationale: Account and onboarding inspection are the core readiness workflow.
+  - query: "Check our Sent balance before I prepare a high-volume send."
+    expect: trigger
+    rationale: A pre-send balance check maps directly to balance.get.
+  - query: "Which organization and Sender Profile did this MCP connection authorize?"
+    expect: trigger
+    rationale: Inspecting the active authorized account context maps to account.get.
+  - query: "Create a WhatsApp Embedded Signup integration for our onboarding page."
+    expect: no_trigger
+    rationale: Implementation and remediation belong to waba-embedded-signup, not readiness inspection.
+  - query: "Onboarding is blocked; tell me the status and help me prepare the right channel-specific remediation."
+    expect: ambiguous
+    rationale: Readiness inspection should trigger first, then route remediation to the relevant SMS, WhatsApp, RCS, or Sender Profile skill.

@@ -1,0 +1,17 @@
+skill: sent-messaging
+cases:
+  - query: "Send this approved WhatsApp template to one customer through Sent."
+    expect: trigger
+    rationale: A direct Sent send belongs to the messaging MCP workflow and must use its preview and confirmation gate.
+  - query: "Did Sent message msg_123 get delivered, and what activities were recorded?"
+    expect: trigger
+    rationale: Retrieval of one message and its activity history maps directly to messages.get and messages.activities.list.
+  - query: "The send request timed out. Can you check whether it happened before trying again?"
+    expect: trigger
+    rationale: Ambiguous-send investigation and safe retry handling are explicit responsibilities of this skill.
+  - query: "Design Sender Profile boundaries for a multi-tenant SaaS product."
+    expect: no_trigger
+    rationale: This is architecture work for sender-profile-architect, not a direct message operation.
+  - query: "Our delivery rate fell yesterday; investigate and send a corrected test message."
+    expect: ambiguous
+    rationale: Aggregate diagnosis belongs to messaging-performance-analyzer, while the eventual direct send belongs here after the cause and payload are resolved.
