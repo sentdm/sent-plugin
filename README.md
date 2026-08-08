@@ -7,7 +7,7 @@ The official Sent agent plugin provides thirteen skills and a remote MCP connect
 Add this repository as a marketplace, then install the plugin:
 
 ```text
-/plugin marketplace add sent-dm/sent-plugin
+/plugin marketplace add sentdm/sent-plugin
 /plugin install sent@sent
 ```
 
