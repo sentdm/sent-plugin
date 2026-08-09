@@ -1,6 +1,6 @@
 ---
 name: sent-contacts
-description: List, inspect, bulk-create, summarize, or delete Sent contacts with the Sent MCP tools. Use for direct contact records and messaging summaries, with confirmation gates for creates and deletes.
+description: Lists, finds, inspects, bulk-creates, summarizes, or deletes Sent contacts with the Sent MCP tools. Use when a user asks to search contacts, get a contact by ID, import or deduplicate a contact list, review a contact's messaging summary, remove a contact, or manage direct contact records. Requires confirmation gates for creates and deletes.
 ---
 
 # Sent Contacts

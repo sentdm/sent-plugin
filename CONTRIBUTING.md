@@ -28,3 +28,16 @@ claude plugin validate ./claude-plugins/sent --strict
 ```
 
 Generated changes in root-level `plugin.json`, `mcp.json`, `skills/`, and `assets/`, plus `plugins/sent`, `claude-plugins/sent`, `.agents`, and `.claude-plugin`, should be committed with their source changes.
+
+## Adding or changing a skill
+
+Treat `packages/sent/skills/<skill-name>/` as the source of truth.
+
+1. Keep `SKILL.md` frontmatter limited to `name` and `description`. Write the description for discovery: state what the skill does and include the user intents, product terms, error symptoms, and boundaries that should trigger it.
+2. Keep the core workflow concise. Put detailed specifications, examples, and decision tables in skill-local `references/`; put repeated deterministic checks in `scripts/` and test those scripts with synthetic fixtures.
+3. Add or update `agents/openai.yaml` when the skill has OpenAI UI metadata, and keep its display name, short description, and default prompt aligned with `SKILL.md`.
+4. Add positive, negative, and relevant overlap cases in `evals/<skill-name>.yaml`.
+5. Add the skill to the `sent` dispatcher and to the catalogs in the root README, `packages/sent/README.md`, and `adapter-sources/shared/README.md`.
+6. Regenerate every adapter and run the complete validation suite above. Do not edit generated skill copies directly.
+
+The repository validator enforces the expected skill set, frontmatter shape, routing coverage, README catalog coverage, local reference integrity, MCP safety contract, generated parity, and public-data policy.

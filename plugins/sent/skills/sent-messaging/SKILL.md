@@ -1,6 +1,6 @@
 ---
 name: sent-messaging
-description: Send a message through Sent or retrieve a message and its activity history with the Sent MCP tools. Use for direct message operations and lifecycle checks; use messaging-performance-analyzer for aggregate delivery diagnosis.
+description: Sends SMS, WhatsApp, or RCS messages through Sent and retrieves individual message status and activity history with the Sent MCP tools. Use when a user asks to send or preview a message, check a message ID, confirm delivery status, inspect lifecycle events, investigate a timed-out or ambiguous send, or retry safely. Use messaging-performance-analyzer for aggregate delivery diagnosis.
 ---
 
 # Sent Messaging

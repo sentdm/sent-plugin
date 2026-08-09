@@ -1,6 +1,6 @@
 ---
 name: sent-analytics
-description: Query Sent number capabilities and aggregate messaging, deliverability, and contact analytics with the Sent MCP tools. Use for dashboard metrics and date-bounded trends; use messaging-performance-analyzer for record-level delivery diagnosis.
+description: Queries Sent phone-number capabilities and aggregate messaging, deliverability, and contact analytics with the Sent MCP tools. Use when a user asks for number lookup, line or channel capability, messages sent, delivery rate, contact growth, dashboard metrics, period comparisons, or date-bounded trends. Use messaging-performance-analyzer for message-level evidence and root-cause diagnosis.
 ---
 
 # Sent Analytics
