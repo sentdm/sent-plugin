@@ -6,9 +6,14 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 from types import ModuleType
+
+import generate_adapters as GENERATOR
+import repository_metadata as REPOSITORY_METADATA
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +48,40 @@ class ValidatorManifestContractTests(unittest.TestCase):
 
     def test_campaign_manifest_values_match_validator(self) -> None:
         self.assertEqual(set(MANIFEST["campaign"]["use_case_values"]), CAMPAIGN.USE_CASES)
+
+
+class RepositoryMetadataContractTests(unittest.TestCase):
+    def test_public_surface_matches_skills_and_openai_submission(self) -> None:
+        metadata = REPOSITORY_METADATA.load_repository_metadata(ROOT)
+        submission = json.loads((ROOT / "chatgpt-app-submission.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(metadata.tools), set(submission["tools"]))
+        self.assertEqual(set(metadata.skills), {path.stem for path in (ROOT / "evals").glob("*.yaml")})
+        self.assertTrue(all(tool.owner in metadata.skills for tool in metadata.tools.values()))
+
+    def test_version_change_propagates_to_generated_manifests(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            source = temporary / "source"
+            output = temporary / "output"
+            shutil.copytree(ROOT / "packages", source / "packages")
+            shutil.copytree(ROOT / "adapter-sources", source / "adapter-sources")
+            plugin_path = source / "packages" / "sent" / "plugin.json"
+            plugin = json.loads(plugin_path.read_text(encoding="utf-8"))
+            plugin["version"] = "9.8.7"
+            plugin_path.write_text(json.dumps(plugin, indent=2) + "\n", encoding="utf-8")
+
+            GENERATOR.build(output, source_root=source)
+
+            generated = (
+                output / "plugin.json",
+                output / "plugins" / "sent" / ".codex-plugin" / "plugin.json",
+                output / "claude-plugins" / "sent" / ".claude-plugin" / "plugin.json",
+            )
+            self.assertTrue(all(json.loads(path.read_text(encoding="utf-8"))["version"] == "9.8.7" for path in generated))
+            marketplace = json.loads(
+                (output / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(marketplace["metadata"]["version"], "9.8.7")
 
 
 class BundledExampleTests(unittest.TestCase):

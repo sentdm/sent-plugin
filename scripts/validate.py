@@ -15,6 +15,8 @@ from urllib.parse import urlparse
 import yaml
 from jsonschema import Draft202012Validator
 
+from repository_metadata import MetadataError, load_repository_metadata
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "packages" / "sent"
@@ -25,46 +27,17 @@ ADAPTER_README = ROOT / "adapter-sources" / "shared" / "README.md"
 SCHEMAS = ROOT / "schemas" / "agent-plugins" / "1.0.0"
 OPENAI_SUBMISSION_SCHEMA = ROOT / "schemas" / "openai" / "chatgpt-app-submission.v1.json"
 CONTRACT_MANIFEST = ROOT / "schemas" / "sent" / "v3-contract-manifest.json"
-VERSION = "0.1.0"
 MCP_URL = "https://mcp.sent.dm/mcp"
 PLUGIN_SCHEMA_ID = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
 MCP_SCHEMA_ID = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json"
-EXPECTED_PACKAGE_ENTRIES = {"plugin.json", "mcp.json", "skills", "assets", "README.md", "LICENSE"}
-EXPECTED_SKILLS = {
-    "sent",
-    "sent-messaging",
-    "sent-contacts",
-    "sent-templates",
-    "sent-analytics",
-    "sent-account-readiness",
-    "messaging-performance-analyzer",
-    "rcs-agent-onboarding",
-    "sender-profile-architect",
-    "sms-10dlc-registration",
-    "template-builder-ui",
-    "waba-embedded-signup",
-    "waba-template-author",
-}
-EXPECTED_TOOLS = {
-    "account.get",
-    "balance.get",
-    "contacts.create_many",
-    "contacts.delete",
-    "contacts.get",
-    "contacts.list",
-    "contacts.message_summary",
-    "dashboard.contacts",
-    "dashboard.deliverability",
-    "dashboard.messages_sent",
-    "messages.activities.list",
-    "messages.get",
-    "messages.send",
-    "numbers.lookup",
-    "onboarding.status",
-    "templates.delete",
-    "templates.get",
-    "templates.get_by_name",
-    "templates.list",
+EXPECTED_PACKAGE_ENTRIES = {
+    "plugin.json",
+    "mcp.json",
+    "public-surface.json",
+    "skills",
+    "assets",
+    "README.md",
+    "LICENSE",
 }
 README_CATALOGS = (
     ROOT / "README.md",
@@ -72,43 +45,18 @@ README_CATALOGS = (
     ADAPTER_README,
 )
 SKILLS_INSTALL_COMMAND = "npx skills add https://github.com/sentdm/sent-plugin --skill sent"
-MCP_SKILLS = {
-    "sent-messaging": {
-        "messages.send",
-        "messages.get",
-        "messages.activities.list",
-    },
-    "sent-contacts": {
-        "contacts.list",
-        "contacts.get",
-        "contacts.create_many",
-        "contacts.delete",
-        "contacts.message_summary",
-    },
-    "sent-templates": {
-        "templates.list",
-        "templates.get",
-        "templates.get_by_name",
-        "templates.delete",
-    },
-    "sent-analytics": {
-        "numbers.lookup",
-        "dashboard.messages_sent",
-        "dashboard.deliverability",
-        "dashboard.contacts",
-    },
-    "sent-account-readiness": {
-        "account.get",
-        "balance.get",
-        "onboarding.status",
-    },
-}
-MUTATION_TOOLS = {
-    "messages.send": "sent-messaging",
-    "contacts.create_many": "sent-contacts",
-    "contacts.delete": "sent-contacts",
-    "templates.delete": "sent-templates",
-}
+try:
+    REPOSITORY_METADATA = load_repository_metadata(ROOT)
+    REPOSITORY_METADATA_ERROR: str | None = None
+except MetadataError as exc:
+    REPOSITORY_METADATA = None
+    REPOSITORY_METADATA_ERROR = str(exc)
+
+VERSION = REPOSITORY_METADATA.version if REPOSITORY_METADATA else ""
+EXPECTED_SKILLS = set(REPOSITORY_METADATA.skills) if REPOSITORY_METADATA else set()
+EXPECTED_TOOLS = set(REPOSITORY_METADATA.tools) if REPOSITORY_METADATA else set()
+MCP_SKILLS = REPOSITORY_METADATA.tools_by_owner if REPOSITORY_METADATA else {}
+MUTATION_TOOLS = REPOSITORY_METADATA.confirmation_tools if REPOSITORY_METADATA else {}
 PUBLIC_FORBIDDEN = {
     "Linear URL": re.compile(r"https?://(?:www\.)?linear\.app", re.IGNORECASE),
     "Slack-derived content": re.compile(r"\bSlack(?:-derived| thread| message| channel)?\b", re.IGNORECASE),
@@ -187,7 +135,10 @@ class Validation:
             for error in self.errors:
                 print(f"- {error}", file=sys.stderr)
             raise SystemExit(1)
-        print("Validated Sent 0.1.0: 13 skills, 19 MCP tools, manifests, evals, and adapters.")
+        print(
+            f"Validated Sent {VERSION}: {len(EXPECTED_SKILLS)} skills, "
+            f"{len(EXPECTED_TOOLS)} MCP tools, manifests, evals, and adapters."
+        )
 
 
 def load_json(path: Path) -> dict:
@@ -213,10 +164,14 @@ def parse_skill(path: Path, validation: Validation) -> tuple[dict, str]:
 
 
 def validate_manifests(validation: Validation) -> None:
+    validation.check(
+        REPOSITORY_METADATA_ERROR is None,
+        f"repository metadata is invalid: {REPOSITORY_METADATA_ERROR}",
+    )
     actual_entries = {entry.name for entry in PACKAGE.iterdir()}
     validation.check(
         actual_entries == EXPECTED_PACKAGE_ENTRIES,
-        "packages/sent must contain only plugin.json, mcp.json, skills/, assets/, README.md, and LICENSE; "
+        "packages/sent must contain only plugin.json, mcp.json, public-surface.json, skills/, assets/, README.md, and LICENSE; "
         f"found {sorted(actual_entries)}",
     )
     plugin = load_json(PACKAGE / "plugin.json")
@@ -231,7 +186,7 @@ def validate_manifests(validation: Validation) -> None:
     validation.check(plugin.get("$schema") == PLUGIN_SCHEMA_ID, "plugin schema version must be 1.0.0")
     validation.check(mcp.get("$schema") == MCP_SCHEMA_ID, "MCP schema version must be 1.0.0")
     validation.check(plugin.get("name") == "sent", "portable plugin name must be sent")
-    validation.check(plugin.get("version") == VERSION, "portable plugin version must be 0.1.0")
+    validation.check(plugin.get("version") == VERSION, f"portable plugin version must match canonical {VERSION!r}")
     expected_server = {"type": "streamable-http", "url": MCP_URL}
     validation.check(
         mcp.get("mcpServers") == {"sent": expected_server},
@@ -410,7 +365,11 @@ def validate_tool_contract(validation: Validation) -> None:
         for tool in tools:
             validation.check(tool in text, f"{name}: missing documented MCP tool {tool}")
         advertised.update(tools)
-    validation.check(len(advertised) == 19, f"expected 19 MCP tools, found {len(advertised)}")
+    validation.check(
+        advertised == EXPECTED_TOOLS,
+        "documented MCP tool ownership must match public-surface.json; "
+        f"missing={sorted(EXPECTED_TOOLS - advertised)}, unexpected={sorted(advertised - EXPECTED_TOOLS)}",
+    )
 
     for tool, skill in MUTATION_TOOLS.items():
         normalized = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8").lower()
@@ -784,6 +743,21 @@ def validate_openai_submission(validation: Validation) -> None:
             and all(isinstance(value, bool) for value in annotations.values()),
             f"OpenAI tool {name} must declare all three Boolean annotations",
         )
+        surface_tool = REPOSITORY_METADATA.tools.get(name) if REPOSITORY_METADATA else None
+        if surface_tool is not None:
+            expected_mutation_hints = {
+                "read_only": (True, False),
+                "state_changing": (False, False),
+                "destructive": (False, True),
+            }[surface_tool.mutation]
+            validation.check(
+                (
+                    annotations.get("readOnlyHint"),
+                    annotations.get("destructiveHint"),
+                )
+                == expected_mutation_hints,
+                f"OpenAI tool {name} annotations conflict with public mutation class {surface_tool.mutation}",
+            )
         justifications = tool.get("justifications", {})
         expected_justifications = {
             "read_only_justification",

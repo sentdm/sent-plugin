@@ -1,6 +1,6 @@
 # Sent Agent Plugin
 
-This generated host adapter packages thirteen official Sent Agent Skills and nineteen remote MCP operations for SMS, WhatsApp, RCS, contacts, templates, analytics, account readiness, delivery diagnosis, compliance, and onboarding.
+This generated host adapter packages the official Sent Agent Skills and remote MCP operations for SMS, WhatsApp, RCS, contacts, templates, analytics, account readiness, delivery diagnosis, compliance, and onboarding.
 
 ## Skills
 

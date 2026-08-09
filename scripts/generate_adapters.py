@@ -10,11 +10,10 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from repository_metadata import load_repository_metadata
+
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE = ROOT / "packages" / "sent"
-COMMANDS = ROOT / "adapter-sources" / "claude" / "commands"
-ADAPTER_README = ROOT / "adapter-sources" / "shared" / "README.md"
 MCP_URL = "https://mcp.sent.dm/mcp"
 GENERATED_TREES = (
     Path("skills"),
@@ -25,6 +24,7 @@ GENERATED_TREES = (
 GENERATED_FILES = (
     Path("plugin.json"),
     Path("mcp.json"),
+    Path("public-surface.json"),
     Path(".agents/plugins/marketplace.json"),
     Path(".claude-plugin/marketplace.json"),
 )
@@ -59,10 +59,15 @@ def reset_tree(path: Path, output_root: Path) -> None:
         shutil.rmtree(path)
 
 
-def build(output_root: Path) -> None:
-    portable_manifest = read_json(PACKAGE / "plugin.json")
-    portable_mcp = read_json(PACKAGE / "mcp.json")
-    version = portable_manifest["version"]
+def build(output_root: Path, source_root: Path = ROOT) -> None:
+    package = source_root / "packages" / "sent"
+    commands = source_root / "adapter-sources" / "claude" / "commands"
+    adapter_readme = source_root / "adapter-sources" / "shared" / "README.md"
+    metadata = load_repository_metadata(source_root)
+    portable_manifest = read_json(package / "plugin.json")
+    portable_mcp = read_json(package / "mcp.json")
+    public_surface = read_json(package / "public-surface.json")
+    version = metadata.version
     endpoint = portable_mcp["mcpServers"]["sent"]["url"]
     if endpoint != MCP_URL:
         raise RuntimeError(f"unexpected Sent MCP URL: {endpoint}")
@@ -71,24 +76,26 @@ def build(output_root: Path) -> None:
     root_assets = output_root / "assets"
     reset_tree(root_skills, output_root)
     reset_tree(root_assets, output_root)
-    copy_tree(PACKAGE / "skills", root_skills)
-    copy_tree(PACKAGE / "assets", root_assets)
+    copy_tree(package / "skills", root_skills)
+    copy_tree(package / "assets", root_assets)
     write_json(output_root / "plugin.json", portable_manifest)
     write_json(output_root / "mcp.json", portable_mcp)
+    write_json(output_root / "public-surface.json", public_surface)
 
     codex_root = output_root / "plugins" / "sent"
     claude_root = output_root / "claude-plugins" / "sent"
     reset_tree(codex_root, output_root)
     reset_tree(claude_root, output_root)
 
-    copy_tree(PACKAGE / "skills", codex_root / "skills")
-    copy_tree(PACKAGE / "assets", codex_root / "assets")
-    copy_tree(PACKAGE / "skills", claude_root / "skills")
-    copy_tree(PACKAGE / "assets", claude_root / "assets")
-    copy_tree(COMMANDS, claude_root / ".claude" / "commands")
+    copy_tree(package / "skills", codex_root / "skills")
+    copy_tree(package / "assets", codex_root / "assets")
+    copy_tree(package / "skills", claude_root / "skills")
+    copy_tree(package / "assets", claude_root / "assets")
+    copy_tree(commands, claude_root / ".claude" / "commands")
     for adapter_root in (codex_root, claude_root):
-        shutil.copy2(ADAPTER_README, adapter_root / "README.md")
-        shutil.copy2(PACKAGE / "LICENSE", adapter_root / "LICENSE")
+        shutil.copy2(adapter_readme, adapter_root / "README.md")
+        shutil.copy2(package / "LICENSE", adapter_root / "LICENSE")
+        write_json(adapter_root / "public-surface.json", public_surface)
 
     common = {
         "name": "sent",
@@ -226,7 +233,8 @@ def main() -> None:
         check()
     else:
         build(ROOT)
-        print("Generated repository-root, Codex, and Claude packages for sent 0.1.0.")
+        metadata = load_repository_metadata(ROOT)
+        print(f"Generated repository-root, Codex, and Claude packages for sent {metadata.version}.")
 
 
 if __name__ == "__main__":
