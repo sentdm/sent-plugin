@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "llms-index",
+      "url": "https://docs.sent.dm/llms.txt",
+      "kind": "documentation-index",
+      "affected_skills": ["sent"],
+      "last_verified": "2026-08-09"
+    },
+    {
+      "id": "openapi",
+      "url": "https://api.sent.dm/swagger/v3/swagger.json",
+      "kind": "openapi",
+      "affected_skills": [
+        "sent-account-readiness",
+        "sent-analytics",
+        "sent-contacts",
+        "sent-messaging",
+        "sent-templates",
+        "sms-10dlc-registration",
+        "waba-embedded-signup",
+        "waba-template-author"
+      ],
+      "last_verified": "2026-08-09"
+    },
+    {
+      "id": "templates",
+      "url": "https://docs.sent.dm/llms/reference/api/template-definition.txt",
+      "kind": "documentation",
+      "affected_skills": ["sent-templates", "template-builder-ui", "waba-template-author"],
+      "last_verified": "2026-08-09"
+    },
+    {
+      "id": "webhooks",
+      "url": "https://docs.sent.dm/llms/start/webhooks/event-types.txt",
+      "kind": "documentation",
+      "affected_skills": [
+        "messaging-performance-analyzer",
+        "sender-profile-architect",
+        "waba-embedded-signup"
+      ],
+      "last_verified": "2026-08-09"
+    },
+    {
+      "id": "sender-profiles",
+      "url": "https://docs.sent.dm/llms/start/concepts/sender-profiles.txt",
+      "kind": "documentation",
+      "affected_skills": ["sender-profile-architect", "sms-10dlc-registration", "waba-embedded-signup"],
+      "last_verified": "2026-08-09"
+    },
+    {
+      "id": "waba",
+      "url": "https://docs.sent.dm/llms/start/guides/connect-whatsapp.txt",
+      "kind": "documentation",
+      "affected_skills": ["waba-embedded-signup", "waba-template-author"],
+      "last_verified": "2026-08-09"
+    },
+    {
+      "id": "routing-rcs",
+      "url": "https://docs.sent.dm/llms/reference/channel-routing.txt",
+      "kind": "documentation",
+      "affected_skills": ["messaging-performance-analyzer", "rcs-agent-onboarding", "sent-messaging"],
+      "last_verified": "2026-08-09"
+    },
+    {
+      "id": "10dlc",
+      "url": "https://docs.sent.dm/llms/start/advanced/10dlc-registration.txt",
+      "kind": "documentation",
+      "affected_skills": ["sms-10dlc-registration"],
+      "last_verified": "2026-08-09"
+    }
+  ]
+}

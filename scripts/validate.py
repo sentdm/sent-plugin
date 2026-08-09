@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import datetime
 import json
 import re
 import shutil
 import subprocess
 import sys
+from collections import Counter
 from collections.abc import Iterable
 from pathlib import Path
 from urllib.parse import urlparse
@@ -28,6 +30,7 @@ MARKETPLACE_CONTENT = ROOT / "adapter-sources" / "shared" / "marketplace.json"
 SCHEMAS = ROOT / "schemas" / "agent-plugins" / "1.0.0"
 OPENAI_SUBMISSION_SCHEMA = ROOT / "schemas" / "openai" / "chatgpt-app-submission.v1.json"
 CONTRACT_MANIFEST = ROOT / "schemas" / "sent" / "v3-contract-manifest.json"
+DOCUMENTATION_SOURCES = ROOT / "schemas" / "sent" / "documentation-sources.json"
 MCP_URL = "https://mcp.sent.dm/mcp"
 PLUGIN_SCHEMA_ID = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
 MCP_SCHEMA_ID = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json"
@@ -97,6 +100,7 @@ PUBLIC_ROOT_FILES = (
 FORBIDDEN_KEY_SUFFIXES = {".key", ".pem", ".p12", ".pfx"}
 LEGACY_PRIVATE_NAMESPACE = "sent" + "-ops-skills:"
 MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+MARKDOWN_HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$", re.MULTILINE)
 LOCAL_RESOURCE = re.compile(r"(?<![A-Za-z0-9_])(?:references|scripts)/[A-Za-z0-9_.\-/]+")
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SKILL_INVOCATION = re.compile(r"\$([a-z0-9]+(?:-[a-z0-9]+)*)")
@@ -241,25 +245,131 @@ def validate_containment(validation: Validation) -> None:
 
 def validate_reference(skill_root: Path, target: str, source: Path, validation: Validation) -> None:
     target = target.strip().strip("`<>")
-    if not target or target.startswith("#"):
+    if not target:
         return
     parsed = urlparse(target)
     if parsed.scheme or target.startswith("//"):
         if parsed.scheme in {"http", "https"}:
             validation.check(parsed.scheme == "https", f"{source.relative_to(ROOT)}: external URLs must use HTTPS")
         return
-    clean = target.split("#", 1)[0].split("?", 1)[0]
-    if not clean:
-        return
-    candidate = Path(clean)
-    validation.check(not candidate.is_absolute(), f"{source.relative_to(ROOT)}: absolute path reference {target}")
-    validation.check(".." not in candidate.parts, f"{source.relative_to(ROOT)}: sibling/root path reference {target}")
-    if candidate.is_absolute() or ".." in candidate.parts:
-        return
-    resolved = (skill_root / candidate).resolve()
+    path_target, _, anchor = target.partition("#")
+    clean = path_target.split("?", 1)[0]
+    if clean:
+        candidate = Path(clean)
+        validation.check(not candidate.is_absolute(), f"{source.relative_to(ROOT)}: absolute path reference {target}")
+        validation.check(".." not in candidate.parts, f"{source.relative_to(ROOT)}: sibling/root path reference {target}")
+        if candidate.is_absolute() or ".." in candidate.parts:
+            return
+        resolved = (skill_root / candidate).resolve()
+    else:
+        resolved = source.resolve()
     root = skill_root.resolve()
     validation.check(root == resolved or root in resolved.parents, f"{source.relative_to(ROOT)}: path escapes skill root: {target}")
     validation.check(resolved.exists(), f"{source.relative_to(ROOT)}: unresolved skill-local reference {target}")
+    if anchor and resolved.is_file() and resolved.suffix.lower() == ".md":
+        anchors = markdown_anchors(resolved.read_text(encoding="utf-8"))
+        validation.check(
+            anchor in anchors,
+            f"{source.relative_to(ROOT)}: broken internal anchor #{anchor} in {target}",
+        )
+
+
+def heading_slug(title: str) -> str:
+    title = re.sub(r"[`*_~]", "", title.strip().casefold())
+    title = re.sub(r"[^\w\s-]", "", title)
+    return re.sub(r"\s+", "-", title)
+
+
+def markdown_anchors(text: str) -> set[str]:
+    anchors: set[str] = set()
+    occurrences: Counter[str] = Counter()
+    for _, title in MARKDOWN_HEADING.findall(text):
+        base = heading_slug(title)
+        count = occurrences[base]
+        occurrences[base] += 1
+        anchors.add(base if count == 0 else f"{base}-{count}")
+    return anchors
+
+
+def validate_reference_hygiene(validation: Validation) -> None:
+    for path in sorted(SKILLS.glob("*/references/**/*.md")):
+        text = path.read_text(encoding="utf-8")
+        headings = MARKDOWN_HEADING.findall(text)
+        validation.check(
+            bool(headings) and headings[0][0] == "#" and text.startswith("# "),
+            f"{path.relative_to(ROOT)}: reference must start with one H1 title",
+        )
+        validation.check(
+            "suggested bundled" not in text.lower(),
+            f"{path.relative_to(ROOT)}: deprecated 'Suggested bundled...' title",
+        )
+        if len(text.splitlines()) <= 100:
+            continue
+        validation.check(
+            "## Table of contents" in text,
+            f"{path.relative_to(ROOT)}: reference over 100 lines requires linked table of contents",
+        )
+        toc_match = re.search(
+            r"^## Table of contents\s*$\n(.*?)(?=^##\s|\Z)",
+            text,
+            re.MULTILINE | re.DOTALL,
+        )
+        if toc_match is None:
+            continue
+        toc = toc_match.group(1)
+        major_headings = [title for level, title in headings if level == "##" and title != "Table of contents"]
+        for title in major_headings:
+            anchor = heading_slug(title)
+            validation.check(
+                f"](#{anchor})" in toc,
+                f"{path.relative_to(ROOT)}: table of contents missing #{anchor}",
+            )
+
+
+def validate_documentation_sources(validation: Validation) -> None:
+    validation.check(DOCUMENTATION_SOURCES.is_file(), "missing documentation source catalog")
+    if not DOCUMENTATION_SOURCES.is_file():
+        return
+    catalog = load_json(DOCUMENTATION_SOURCES)
+    validation.check(set(catalog) == {"schema_version", "sources"}, "documentation source catalog fields drifted")
+    validation.check(catalog.get("schema_version") == 1, "documentation source catalog schema_version must be 1")
+    sources = catalog.get("sources")
+    validation.check(isinstance(sources, list) and bool(sources), "documentation source catalog must contain sources")
+    if not isinstance(sources, list):
+        return
+    identifiers: set[str] = set()
+    for index, source in enumerate(sources, 1):
+        validation.check(isinstance(source, dict), f"documentation source {index} must be an object")
+        if not isinstance(source, dict):
+            continue
+        validation.check(
+            set(source) == {"id", "url", "kind", "affected_skills", "last_verified"},
+            f"documentation source {index} fields drifted",
+        )
+        identifier = source.get("id")
+        validation.check(isinstance(identifier, str) and bool(identifier), f"documentation source {index} id is required")
+        if isinstance(identifier, str):
+            validation.check(identifier not in identifiers, f"duplicate documentation source id {identifier}")
+            identifiers.add(identifier)
+        validation.check(
+            urlparse(str(source.get("url", ""))).scheme == "https",
+            f"documentation source {identifier} must use HTTPS",
+        )
+        affected = source.get("affected_skills")
+        validation.check(
+            isinstance(affected, list)
+            and bool(affected)
+            and all(isinstance(name, str) for name in affected)
+            and set(affected) <= EXPECTED_SKILLS,
+            f"documentation source {identifier} has invalid affected_skills",
+        )
+        last_verified = source.get("last_verified")
+        try:
+            datetime.date.fromisoformat(last_verified) if isinstance(last_verified, str) else None
+            valid_date = isinstance(last_verified, str)
+        except ValueError:
+            valid_date = False
+        validation.check(valid_date, f"documentation source {identifier} requires a valid last_verified date")
 
 
 def validate_skills(validation: Validation) -> None:
@@ -908,6 +1018,8 @@ def main() -> None:
     validate_root_discovery(validation)
     validate_containment(validation)
     validate_skills(validation)
+    validate_reference_hygiene(validation)
+    validate_documentation_sources(validation)
     validate_skill_ui_metadata(validation)
     validate_marketplace_content(validation)
     validate_public_content(validation)
