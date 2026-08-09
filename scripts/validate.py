@@ -21,6 +21,7 @@ PACKAGE = ROOT / "packages" / "sent"
 SKILLS = PACKAGE / "skills"
 ROOT_SKILLS = ROOT / "skills"
 EVALS = ROOT / "evals"
+ADAPTER_README = ROOT / "adapter-sources" / "shared" / "README.md"
 SCHEMAS = ROOT / "schemas" / "agent-plugins" / "1.0.0"
 OPENAI_SUBMISSION_SCHEMA = ROOT / "schemas" / "openai" / "chatgpt-app-submission.v1.json"
 VERSION = "0.1.0"
@@ -64,6 +65,12 @@ EXPECTED_TOOLS = {
     "templates.get_by_name",
     "templates.list",
 }
+README_CATALOGS = (
+    ROOT / "README.md",
+    PACKAGE / "README.md",
+    ADAPTER_README,
+)
+SKILLS_INSTALL_COMMAND = "npx skills add https://github.com/sentdm/sent-plugin --skill sent"
 MCP_SKILLS = {
     "sent-messaging": {
         "messages.send",
@@ -376,6 +383,55 @@ def validate_tool_contract(validation: Validation) -> None:
     validation.check("consent" in analytics and "capability" in analytics, "sent-analytics must not treat lookup as consent")
 
 
+def validate_documentation(validation: Validation) -> None:
+    for path in README_CATALOGS:
+        validation.check(path.is_file(), f"missing README catalog: {path.relative_to(ROOT)}")
+        if not path.is_file():
+            continue
+        content = path.read_text(encoding="utf-8")
+        for name in EXPECTED_SKILLS:
+            target = f"skills/{name}/SKILL.md"
+            validation.check(
+                target in content,
+                f"{path.relative_to(ROOT)}: skill catalog does not link {target}",
+            )
+        validation.check(
+            SKILLS_INSTALL_COMMAND in content,
+            f"{path.relative_to(ROOT)}: missing canonical Skills CLI install command",
+        )
+        validation.check(
+            "https://docs.sent.dm/llms.txt" in content,
+            f"{path.relative_to(ROOT)}: missing machine-readable Sent documentation index",
+        )
+
+    plugin = load_json(PACKAGE / "plugin.json")
+    required_keywords = {
+        "agent-skills",
+        "business-messaging",
+        "sms",
+        "whatsapp",
+        "rcs",
+        "10dlc",
+        "waba",
+        "rbm",
+        "deliverability",
+        "mcp",
+    }
+    keywords = set(plugin.get("keywords", []))
+    validation.check(
+        required_keywords <= keywords,
+        f"plugin discovery keywords missing: {sorted(required_keywords - keywords)}",
+    )
+
+    for name in EXPECTED_SKILLS:
+        metadata, _ = parse_skill(SKILLS / name / "SKILL.md", validation)
+        description = str(metadata.get("description", ""))
+        validation.check(
+            len(description.split()) >= 12 and "use " in description.lower(),
+            f"{name}: discovery description must explain behavior and when to use the skill",
+        )
+
+
 def validate_evals(validation: Validation) -> None:
     eval_files = {path.stem for path in EVALS.glob("*.yaml")}
     validation.check(eval_files == EXPECTED_SKILLS, f"eval set must exactly match public skills; found {sorted(eval_files)}")
@@ -570,6 +626,7 @@ def main() -> None:
     validate_skills(validation)
     validate_public_content(validation)
     validate_tool_contract(validation)
+    validate_documentation(validation)
     validate_evals(validation)
     validate_adapters(validation)
     validate_openai_submission(validation)

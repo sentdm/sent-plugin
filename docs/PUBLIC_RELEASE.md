@@ -28,6 +28,9 @@ CI must pass on the exact commit being submitted. Resolve warnings as well as er
 
 - Verify the homepage, documentation, privacy, terms, support, and MCP URLs are publicly reachable over HTTPS.
 - Confirm the README accurately describes installation, authentication, data handling, mutation confirmation, and support.
+- Confirm every public skill appears in each README catalog with a task-oriented description and a working `skills/<name>/SKILL.md` link.
+- Run `npx skills add https://github.com/sentdm/sent-plugin --list` against the public release and confirm all thirteen skills are discoverable by name.
+- Review every `SKILL.md` frontmatter description for natural-language triggers, product synonyms, error symptoms, and explicit scope boundaries.
 - Confirm all fixtures are synthetic and all external documentation links are public.
 - Confirm license and provenance notices remain present in the repository and distributable plugin.
 - Complete security, privacy, legal, and product review without publishing reviewer accounts, credentials, or internal findings.

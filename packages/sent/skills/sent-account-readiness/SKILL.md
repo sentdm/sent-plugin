@@ -1,6 +1,6 @@
 ---
 name: sent-account-readiness
-description: Check the authorized Sent account, balance, and onboarding readiness with the Sent MCP tools. Use before mutations or launches; route channel-specific remediation to the relevant onboarding or compliance skill.
+description: Checks the authorized Sent account, organization and Sender Profile scope, balance, onboarding/KYC status, and readiness with the Sent MCP tools. Use when a user asks whether the account can send, what the MCP connection authorized, whether funds are sufficient, why onboarding is blocked, or for a preflight check before a mutation or channel launch. Route remediation to the relevant onboarding or compliance skill.
 ---
 
 # Sent Account Readiness

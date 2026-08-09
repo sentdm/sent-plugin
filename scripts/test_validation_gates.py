@@ -82,6 +82,23 @@ def missing_listing_url(root: Path) -> None:
     subprocess.run([sys.executable, str(path)], cwd=root, check=True, capture_output=True, text=True)
 
 
+def missing_readme_catalog_entry(root: Path) -> None:
+    path = root / "packages" / "sent" / "README.md"
+    content = path.read_text(encoding="utf-8")
+    path.write_text(
+        content.replace("skills/sent-analytics/SKILL.md", "skills/missing/SKILL.md"),
+        encoding="utf-8",
+    )
+
+
+def weak_skill_discovery_description(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "sent-analytics" / "SKILL.md"
+    content = path.read_text(encoding="utf-8")
+    lines = content.splitlines()
+    lines[2] = "description: Sent analytics tools."
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def wrong_openai_test_count(root: Path) -> None:
     path = root / "chatgpt-app-submission.json"
     submission = json.loads(path.read_text(encoding="utf-8"))
@@ -100,6 +117,8 @@ CASES: tuple[tuple[str, Mutation, str], ...] = (
     ("generated adapter drift", adapter_drift, "adapter drift detected"),
     ("repository-root plugin discovery", missing_root_mcp, "repository root must contain mcp.json"),
     ("required listing URLs", missing_listing_url, "Codex websiteURL must be an HTTPS URL"),
+    ("README skill catalog coverage", missing_readme_catalog_entry, "skill catalog does not link"),
+    ("skill discovery descriptions", weak_skill_discovery_description, "discovery description must explain"),
     ("OpenAI test counts", wrong_openai_test_count, "exactly three negative test cases"),
 )
 

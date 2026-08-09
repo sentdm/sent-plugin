@@ -1,6 +1,6 @@
 ---
 name: sent-templates
-description: List, find, inspect, or delete existing Sent templates with the Sent MCP tools. Use for direct template records; use waba-template-author to write WhatsApp template content and template-builder-ui to design template interfaces.
+description: Lists, finds by name or ID, inspects, or deletes existing Sent templates with the Sent MCP tools. Use when a user asks to browse templates, find an approved template, check template language, channel, category, or status, retrieve a template record, or delete a template. Use waba-template-author to write WhatsApp content and template-builder-ui to design template interfaces.
 ---
 
 # Sent Templates

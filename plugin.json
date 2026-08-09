@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "sent",
   "version": "0.1.0",
-  "description": "Official Sent agent plugin for messaging, contacts, templates, analytics, account readiness, and SMS, WhatsApp, and RCS workflows.",
+  "description": "Official Sent business messaging plugin with 13 agent skills and 19 MCP tools for SMS, WhatsApp, RCS, contacts, templates, analytics, account readiness, delivery diagnosis, 10DLC, WABA, RBM, and Sender Profile workflows.",
   "author": {
     "name": "Sent",
     "url": "https://sent.dm"
@@ -12,10 +12,22 @@
   "license": "MIT",
   "keywords": [
     "sent",
+    "agent-skills",
+    "business-messaging",
     "messaging",
     "sms",
     "whatsapp",
     "rcs",
+    "10dlc",
+    "a2p",
+    "tcr",
+    "waba",
+    "rbm",
+    "contacts",
+    "templates",
+    "analytics",
+    "deliverability",
+    "sender-profiles",
     "mcp"
   ]
 }
