@@ -161,6 +161,37 @@ def mutation_annotation_drift(root: Path) -> None:
     path.write_text(json.dumps(submission, indent=2) + "\n", encoding="utf-8")
 
 
+def missing_long_reference_toc(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "messaging-performance-analyzer" / "references" / "mdr-status-codes.md"
+    content = path.read_text(encoding="utf-8")
+    path.write_text(content.replace("## Table of contents", "## Navigation", 1), encoding="utf-8")
+
+
+def broken_reference_anchor(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "messaging-performance-analyzer" / "references" / "performance-diagnosis-playbook.md"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write("\n[Broken navigation](#missing-section)\n")
+
+
+def deprecated_reference_heading(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "sent" / "references" / "sent-glossary.md"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write("\n## Suggested bundled references\n")
+
+
+def unresolved_bundled_resource(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "messaging-performance-analyzer" / "SKILL.md"
+    content = path.read_text(encoding="utf-8")
+    path.write_text(content.replace("scripts/fixtures/good.json", "scripts/fixtures/missing.json"), encoding="utf-8")
+
+
+def invalid_documentation_source_skill(root: Path) -> None:
+    path = root / "schemas" / "sent" / "documentation-sources.json"
+    catalog = json.loads(path.read_text(encoding="utf-8"))
+    catalog["sources"][0]["affected_skills"] = ["missing-skill"]
+    path.write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
+
+
 def retired_brand_endpoint(root: Path) -> None:
     path = root / "packages" / "sent" / "skills" / "sms-10dlc-registration" / "SKILL.md"
     with path.open("a", encoding="utf-8") as handle:
@@ -213,6 +244,11 @@ CASES: tuple[tuple[str, Mutation, str], ...] = (
     ("unexpected MCP tool", unexpected_public_tool, "OpenAI submission tool set mismatch"),
     ("invalid MCP tool owner", invalid_tool_owner, "is not a canonical skill"),
     ("mutation annotation consistency", mutation_annotation_drift, "public mutation class destructive"),
+    ("long reference TOC", missing_long_reference_toc, "requires linked table of contents"),
+    ("internal reference anchors", broken_reference_anchor, "broken internal anchor"),
+    ("deprecated reference headings", deprecated_reference_heading, "deprecated 'Suggested bundled...' title"),
+    ("bundled resource paths", unresolved_bundled_resource, "unresolved skill-local reference"),
+    ("documentation source skills", invalid_documentation_source_skill, "invalid affected_skills"),
     ("retired brand endpoint", retired_brand_endpoint, "retired endpoint"),
     ("template webhook envelope", template_sub_type, "template webhook example uses sub_type"),
     ("ordered channel fallback", ordered_channel_fallback, "explicit RCS/SMS array"),

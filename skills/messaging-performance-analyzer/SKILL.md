@@ -140,8 +140,3 @@ Use the `sent` skill for shared Sent terminology and routing.
 | `scripts/analyze_mdr_funnel.py` | Validation script | Reads an MDR export (CSV or JSON), groups channel × direction outcomes, separates delivery transitions from engagement, and retains malformed/unknown rows. Run from the skill root: `python scripts/analyze_mdr_funnel.py path/to/mdr.csv` (use `--threshold N`, `--show-errors`, or `--format json`). Exit `0` means no observed transition breach, `2` means bad input/no usable cohort, and `3` means an observed breach. JSON uses `null` where a denominator is unavailable; text uses `N/A`. |
 | `scripts/fixtures/good.json` | Fixture | Synthetic healthy-funnel MDR export. |
 | `scripts/fixtures/bad.json` | Fixture | Synthetic MDR export with deliberate >50% SENT→DELIVERED drop. |
-
-## Unverified claims to confirm or remove
-
-- Any fixed cohort-size threshold such as “1,000 messages minimum” is an analyst heuristic, not a documented Sent API rule.
-- External provider identifiers such as carrier message IDs, WhatsApp `wamid`, and RCS message IDs are not in the v3 docs as join keys; use Sent `message_id` and treat provider IDs as escalation-only context.

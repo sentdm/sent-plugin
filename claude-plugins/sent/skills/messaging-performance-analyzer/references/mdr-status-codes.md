@@ -3,9 +3,21 @@
 Supporting reference for `messaging-performance-analyzer`. "MDR" is the human term for Sent's per-message status stream; the v3 surfaces are `GET /v3/messages/{id}` and `GET /v3/messages/{id}/activities`. The codes below are Sent's own normalized catalog as documented at docs.sent.dm — not raw provider codes.
 
 Authoritative upstream sources (for the downstream provider codes that may appear in `error.details` after Sent normalization):
+
 - WhatsApp: [Cloud API Error Codes](https://developers.facebook.com/docs/whatsapp/cloud-api/support/error-codes)
 - SMS: TCR + carrier-specific reject reasons (T-Mobile, AT&T, Verizon each publish their own list)
 - RCS: [RBM API errors](https://developers.google.com/business-communications/rcs-business-messaging/reference/rest)
+
+## Table of contents
+
+- [Message status lifecycle](#message-status-lifecycle)
+- [Synchronous errors](#synchronous-errors-http-response-body)
+- [Send-time per-message errors](#send-time-per-message-errors)
+- [Webhook payload shape](#webhook-payload-shape)
+- [Webhook event lifecycle](#webhook-event-lifecycle)
+- [Provider-level codes](#provider-level-codes-referential-not-sent-normalized)
+- [Counting rules](#counting-rules)
+- [Source notes](#source-notes)
 
 ## Message status lifecycle
 
@@ -214,3 +226,10 @@ Carriers don't share an enum; the categories you actually need to triage on:
 - **Stop SMS at `DELIVERED`.** Calculate `READ` engagement only for WhatsApp and RCS.
 - **Separate channel fan-out.** `POST /v3/messages` with `"channel": ["sms","whatsapp","rcs"]` creates one message per channel; each has its own `message_id` and its own lifecycle. Don't double-count at the recipient level unless the user explicitly asks for recipient-level rollup.
 - **Honor a minimum cohort size** before drawing conclusions about small rate shifts. A working heuristic is ≥1,000 messages per cohort; below that, noise dominates. This is an analyst rule of thumb, not a Sent API rule.
+
+## Source notes
+
+- Sent lifecycle, error-envelope, template, message-activity, and webhook claims were last checked on 2026-08-09 against the [Sent v3 OpenAPI](https://api.sent.dm/swagger/v3/swagger.json), [message status guide](https://docs.sent.dm/llms/start/guides/message-status-tracking.txt), and [webhook event reference](https://docs.sent.dm/llms/start/webhooks/event-types.txt).
+- Provider-code tables are referential aids sourced from the linked provider documentation; they are not Sent-normalized enums. SMS carriers do not publish one shared reject enum.
+- The 1,000-message cohort threshold is an analyst heuristic, not a documented Sent API requirement.
+- Provider identifiers such as carrier message IDs, WhatsApp `wamid`, and RCS message IDs are not documented Sent v3 join keys. Use Sent `message_id` and treat provider IDs as escalation context.

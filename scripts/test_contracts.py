@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import datetime
 import importlib.util
 import json
 import re
@@ -120,6 +121,31 @@ class SkillUiMetadataContractTests(unittest.TestCase):
         specialists = set(metadata.skills) - set(metadata.tools_by_owner) - {"sent"}
         self.assertGreaterEqual(len(invoked & specialists), 2)
         self.assertEqual(catalog["website_url"], "https://github.com/sentdm/sent-plugin#readme")
+
+
+class DocumentationSourceContractTests(unittest.TestCase):
+    def test_source_catalog_covers_freshness_domains(self) -> None:
+        metadata = REPOSITORY_METADATA.load_repository_metadata(ROOT)
+        path = ROOT / "schemas" / "sent" / "documentation-sources.json"
+        catalog = json.loads(path.read_text(encoding="utf-8"))
+        sources = {source["id"]: source for source in catalog["sources"]}
+        self.assertEqual(
+            set(sources),
+            {
+                "llms-index",
+                "openapi",
+                "templates",
+                "webhooks",
+                "sender-profiles",
+                "waba",
+                "routing-rcs",
+                "10dlc",
+            },
+        )
+        for source in sources.values():
+            self.assertTrue(source["url"].startswith("https://"))
+            self.assertTrue(set(source["affected_skills"]) <= set(metadata.skills))
+            datetime.date.fromisoformat(source["last_verified"])
 
 
 class BundledExampleTests(unittest.TestCase):

@@ -4,6 +4,14 @@ Supporting reference for `messaging-performance-analyzer`. The SKILL.md tells yo
 
 For the full catalog of codes referenced below, see `references/mdr-status-codes.md`.
 
+## Table of contents
+
+- [Symptom-driven diagnosis](#symptom-driven-diagnosis)
+- [Cross-skill handoff matrix](#cross-skill-handoff-matrix)
+- [When to escalate to Sent support](#when-to-escalate-to-sent-support)
+- [Diagnostic loop](#diagnostic-loop)
+- [Source notes](#source-notes)
+
 ## Symptom-driven diagnosis
 
 Every entry follows the same pattern: **observable symptom -> where the failure code lives -> what to check first -> handoff if rooted elsewhere.**
@@ -137,3 +145,9 @@ Repeat until the symptom is explained or scoped:
 7. If the symptom is missing customer-side data: prove webhook health via `is_active`, `consecutive_failures`, and `/v3/webhooks/{id}/events` before blaming delivery.
 8. Hand off via the matrix above, or escalate to Sent support with the required evidence.
 9. Quantify the diagnosis — never "looks better now" without a recomputed funnel.
+
+## Source notes
+
+- This playbook is operational guidance synthesized from the [Sent v3 OpenAPI](https://api.sent.dm/swagger/v3/swagger.json), [message status guide](https://docs.sent.dm/llms/start/guides/message-status-tracking.txt), [webhook event reference](https://docs.sent.dm/llms/start/webhooks/event-types.txt), and [channel-routing reference](https://docs.sent.dm/llms/reference/channel-routing.txt), last checked on 2026-08-09.
+- Dominance thresholds, cohort-size guidance, comparison windows, and escalation timing are analyst heuristics unless a cited Sent source states otherwise.
+- Re-check the repository documentation source catalog before relying on exact endpoints, enums, or limits after its `last_verified` date.
