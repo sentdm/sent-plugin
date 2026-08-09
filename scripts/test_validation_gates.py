@@ -71,6 +71,10 @@ def adapter_drift(root: Path) -> None:
     path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 
 
+def missing_root_mcp(root: Path) -> None:
+    (root / "mcp.json").unlink()
+
+
 def missing_listing_url(root: Path) -> None:
     path = root / "scripts" / "generate_adapters.py"
     content = path.read_text(encoding="utf-8")
@@ -94,6 +98,7 @@ CASES: tuple[tuple[str, Mutation, str], ...] = (
     ("symlink containment", escaping_symlink, "symlink escapes package"),
     ("one eval per skill", missing_eval, "eval set must exactly match public skills"),
     ("generated adapter drift", adapter_drift, "adapter drift detected"),
+    ("repository-root plugin discovery", missing_root_mcp, "repository root must contain mcp.json"),
     ("required listing URLs", missing_listing_url, "Codex websiteURL must be an HTTPS URL"),
     ("OpenAI test counts", wrong_openai_test_count, "exactly three negative test cases"),
 )

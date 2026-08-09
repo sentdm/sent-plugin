@@ -27,4 +27,4 @@ claude plugin validate . --strict
 claude plugin validate ./claude-plugins/sent --strict
 ```
 
-Generated changes under `plugins/sent`, `claude-plugins/sent`, `.agents`, and `.claude-plugin` should be committed with their source changes.
+Generated changes in root-level `plugin.json`, `mcp.json`, `skills/`, and `assets/`, plus `plugins/sent`, `claude-plugins/sent`, `.agents`, and `.claude-plugin`, should be committed with their source changes.

@@ -5,6 +5,7 @@ Use this checklist for every public release.
 ## Repository and package
 
 - Confirm the GitHub repository is public and the release commit is on the default branch.
+- Confirm the repository root contains `plugin.json`, `mcp.json`, `skills/`, and `assets/` for GitHub auto-discovery.
 - Confirm `.claude-plugin/marketplace.json` points to `./claude-plugins/sent`.
 - Confirm the Claude plugin contains its manifest, README, license, skills, commands, assets, and HTTPS MCP configuration.
 - Update the version consistently before release; plugin names are stable public identifiers and must not be renamed casually.

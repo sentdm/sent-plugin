@@ -1,6 +1,6 @@
 # Sent Agent Plugin
 
-The official Sent agent plugin provides thirteen skills and a remote MCP connection for business messaging, contacts, templates, analytics, account readiness, SMS, WhatsApp, and RCS workflows.
+The official Sent agent plugin provides thirteen skills and a remote MCP connection for business messaging, contacts, templates, analytics, account readiness, SMS, WhatsApp, and RCS workflows. The repository root is a complete Agent Plugins 1.0.0 package so GitHub-based plugin directories can discover it directly.
 
 ## Install in Claude Code
 
@@ -25,6 +25,7 @@ Skills require an explicit preview and confirmation immediately before sends, co
 
 ## Repository layout
 
+- `plugin.json`, `mcp.json`, `skills/`, and `assets/` — generated repository-root portable package for GitHub auto-discovery.
 - `packages/sent/` — canonical Agent Plugins 1.0.0 package.
 - `claude-plugins/sent/` — generated Claude Code plugin and compatibility commands.
 - `plugins/sent/` — generated Codex plugin.
@@ -35,7 +36,7 @@ Skills require an explicit preview and confirmation immediately before sends, co
 - `schemas/` — pinned schemas used by repository validation.
 - `scripts/` — deterministic generation, validation, and fixture tests.
 
-Generated adapter trees are checked in so marketplace installations are self-contained. Do not edit them directly; update `packages/sent` or `adapter-sources` and regenerate.
+Generated root and adapter trees are checked in so GitHub and marketplace installations are self-contained. Do not edit them directly; update `packages/sent` or `adapter-sources` and regenerate.
 
 ## Develop and validate
 

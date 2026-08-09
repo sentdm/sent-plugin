@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Codex and Claude adapters from the canonical portable package."""
+"""Generate the repository-root package and host adapters from the canonical package."""
 
 from __future__ import annotations
 
@@ -16,8 +16,15 @@ PACKAGE = ROOT / "packages" / "sent"
 COMMANDS = ROOT / "adapter-sources" / "claude" / "commands"
 ADAPTER_README = ROOT / "adapter-sources" / "shared" / "README.md"
 MCP_URL = "https://mcp.sent.dm/mcp"
-GENERATED_TREES = (Path("plugins/sent"), Path("claude-plugins/sent"))
+GENERATED_TREES = (
+    Path("skills"),
+    Path("assets"),
+    Path("plugins/sent"),
+    Path("claude-plugins/sent"),
+)
 GENERATED_FILES = (
+    Path("plugin.json"),
+    Path("mcp.json"),
     Path(".agents/plugins/marketplace.json"),
     Path(".claude-plugin/marketplace.json"),
 )
@@ -59,6 +66,15 @@ def build(output_root: Path) -> None:
     endpoint = portable_mcp["mcpServers"]["sent"]["url"]
     if endpoint != MCP_URL:
         raise RuntimeError(f"unexpected Sent MCP URL: {endpoint}")
+
+    root_skills = output_root / "skills"
+    root_assets = output_root / "assets"
+    reset_tree(root_skills, output_root)
+    reset_tree(root_assets, output_root)
+    copy_tree(PACKAGE / "skills", root_skills)
+    copy_tree(PACKAGE / "assets", root_assets)
+    write_json(output_root / "plugin.json", portable_manifest)
+    write_json(output_root / "mcp.json", portable_mcp)
 
     codex_root = output_root / "plugins" / "sent"
     claude_root = output_root / "claude-plugins" / "sent"
@@ -210,7 +226,7 @@ def main() -> None:
         check()
     else:
         build(ROOT)
-        print("Generated Codex and Claude adapters for sent 0.1.0.")
+        print("Generated repository-root, Codex, and Claude packages for sent 0.1.0.")
 
 
 if __name__ == "__main__":

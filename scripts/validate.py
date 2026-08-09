@@ -19,6 +19,7 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "packages" / "sent"
 SKILLS = PACKAGE / "skills"
+ROOT_SKILLS = ROOT / "skills"
 EVALS = ROOT / "evals"
 SCHEMAS = ROOT / "schemas" / "agent-plugins" / "1.0.0"
 OPENAI_SUBMISSION_SCHEMA = ROOT / "schemas" / "openai" / "chatgpt-app-submission.v1.json"
@@ -215,6 +216,25 @@ def validate_manifests(validation: Validation) -> None:
     author_url = plugin.get("author", {}).get("url", "")
     validation.check(urlparse(author_url).scheme == "https", "plugin author.url must use HTTPS")
     validation.check(urlparse(MCP_URL).scheme == "https", "MCP URL must use HTTPS")
+
+
+def validate_root_discovery(validation: Validation) -> None:
+    """Keep the GitHub repository root directly discoverable as one portable plugin."""
+    validation.check((ROOT / "plugin.json").is_file(), "repository root must contain plugin.json")
+    validation.check((ROOT / "mcp.json").is_file(), "repository root must contain mcp.json")
+    validation.check(ROOT_SKILLS.is_dir(), "repository root must contain skills/")
+    if not ROOT_SKILLS.is_dir():
+        return
+    discovered = {
+        path.name
+        for path in ROOT_SKILLS.iterdir()
+        if path.is_dir() and (path / "SKILL.md").is_file()
+    }
+    validation.check(
+        discovered == EXPECTED_SKILLS,
+        "repository-root skill discovery must expose all public skills; "
+        f"found {sorted(discovered)}",
+    )
 
 
 def validate_containment(validation: Validation) -> None:
@@ -545,6 +565,7 @@ def main() -> None:
     validation = Validation()
     validate_repository_hygiene(validation)
     validate_manifests(validation)
+    validate_root_discovery(validation)
     validate_containment(validation)
     validate_skills(validation)
     validate_public_content(validation)
