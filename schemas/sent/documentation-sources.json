@@ -6,7 +6,21 @@
       "url": "https://docs.sent.dm/llms.txt",
       "kind": "documentation-index",
       "affected_skills": ["sent"],
-      "last_verified": "2026-08-09"
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "docs.index.template_definition_listed",
+          "extractor": "contains",
+          "pattern": "https://docs.sent.dm/llms/reference/api/template-definition.txt",
+          "expected": true
+        },
+        {
+          "fact": "docs.index.webhook_events_listed",
+          "extractor": "contains",
+          "pattern": "https://docs.sent.dm/llms/start/webhooks/event-types.txt",
+          "expected": true
+        }
+      ]
     },
     {
       "id": "openapi",
@@ -22,14 +36,29 @@
         "waba-embedded-signup",
         "waba-template-author"
       ],
-      "last_verified": "2026-08-09"
+      "last_verified": "2026-08-09",
+      "checks": []
     },
     {
       "id": "templates",
       "url": "https://docs.sent.dm/llms/reference/api/template-definition.txt",
       "kind": "documentation",
       "affected_skills": ["sent-templates", "template-builder-ui", "waba-template-author"],
-      "last_verified": "2026-08-09"
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "template.body_max_length",
+          "extractor": "regex_int",
+          "pattern": "Body text[^\\n]*Maximum (\\d+) characters",
+          "expected": 1024
+        },
+        {
+          "fact": "template.button_total_limit",
+          "extractor": "regex_int",
+          "pattern": "maximum of (\\d+) buttons",
+          "expected": 10
+        }
+      ]
     },
     {
       "id": "webhooks",
@@ -40,35 +69,105 @@
         "sender-profile-architect",
         "waba-embedded-signup"
       ],
-      "last_verified": "2026-08-09"
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "webhook.message_delivered_event",
+          "extractor": "contains",
+          "pattern": "\"event\": \"message.delivered\"",
+          "expected": true
+        },
+        {
+          "fact": "webhook.template_event_omitted",
+          "extractor": "contains",
+          "pattern": "omitted for template events",
+          "expected": true
+        }
+      ]
     },
     {
       "id": "sender-profiles",
       "url": "https://docs.sent.dm/llms/start/concepts/sender-profiles.txt",
       "kind": "documentation",
       "affected_skills": ["sender-profile-architect", "sms-10dlc-registration", "waba-embedded-signup"],
-      "last_verified": "2026-08-09"
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "profile.organization_scope_header",
+          "extractor": "contains",
+          "pattern": "x-profile-id",
+          "expected": true
+        },
+        {
+          "fact": "profile.rcs_agent_dedicated",
+          "extractor": "contains",
+          "pattern": "RCS Agent",
+          "expected": true
+        }
+      ]
     },
     {
       "id": "waba",
       "url": "https://docs.sent.dm/llms/start/guides/connect-whatsapp.txt",
       "kind": "documentation",
       "affected_skills": ["waba-embedded-signup", "waba-template-author"],
-      "last_verified": "2026-08-09"
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "waba.id_field",
+          "extractor": "contains",
+          "pattern": "waba_id",
+          "expected": true
+        },
+        {
+          "fact": "waba.access_token_field",
+          "extractor": "contains",
+          "pattern": "access_token",
+          "expected": true
+        }
+      ]
     },
     {
       "id": "routing-rcs",
       "url": "https://docs.sent.dm/llms/reference/channel-routing.txt",
       "kind": "documentation",
       "affected_skills": ["messaging-performance-analyzer", "rcs-agent-onboarding", "sent-messaging"],
-      "last_verified": "2026-08-09"
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "routing.multiple_explicit_channels",
+          "extractor": "contains",
+          "pattern": "broadcast list, not a fallback priority list",
+          "expected": true
+        },
+        {
+          "fact": "routing.rcs_supported",
+          "extractor": "contains",
+          "pattern": "Pins the message to RCS",
+          "expected": true
+        }
+      ]
     },
     {
       "id": "10dlc",
       "url": "https://docs.sent.dm/llms/start/advanced/10dlc-registration.txt",
       "kind": "documentation",
       "affected_skills": ["sms-10dlc-registration"],
-      "last_verified": "2026-08-09"
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "10dlc.tcr_submission",
+          "extractor": "contains",
+          "pattern": "submit to TCR",
+          "expected": true
+        },
+        {
+          "fact": "10dlc.opt_in_consent",
+          "extractor": "contains",
+          "pattern": "consent",
+          "expected": true
+        }
+      ]
     }
   ]
 }

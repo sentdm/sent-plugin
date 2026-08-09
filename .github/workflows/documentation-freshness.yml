@@ -1,0 +1,52 @@
+name: Monitor Sent contract and documentation freshness
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  schedule:
+    - cron: "17 9 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  freshness-and-routing:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      SENT_ROUTING_EVAL_MODEL: ${{ vars.SENT_ROUTING_EVAL_MODEL || 'gpt-5-mini' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install validators
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Compare live Sent contract and documentation facts
+        run: >-
+          python scripts/check_live_contract.py
+          --timeout 15
+          --retries 2
+          --output artifacts/documentation-freshness.json
+
+      - name: Upload freshness diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: documentation-freshness
+          path: artifacts/documentation-freshness.json
+          if-no-files-found: warn
+
+      - name: Run model-backed routing evaluation
+        if: always() && env.OPENAI_API_KEY != ''
+        run: python scripts/run_model_routing_eval.py
+
+      - name: Explain skipped model evaluation
+        if: always() && env.OPENAI_API_KEY == ''
+        run: echo "OPENAI_API_KEY is not configured; freshness monitoring still ran, but model routing evaluation was skipped."

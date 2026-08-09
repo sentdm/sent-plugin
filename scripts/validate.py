@@ -343,7 +343,7 @@ def validate_documentation_sources(validation: Validation) -> None:
         if not isinstance(source, dict):
             continue
         validation.check(
-            set(source) == {"id", "url", "kind", "affected_skills", "last_verified"},
+            set(source) == {"id", "url", "kind", "affected_skills", "last_verified", "checks"},
             f"documentation source {index} fields drifted",
         )
         identifier = source.get("id")
@@ -370,6 +370,28 @@ def validate_documentation_sources(validation: Validation) -> None:
         except ValueError:
             valid_date = False
         validation.check(valid_date, f"documentation source {identifier} requires a valid last_verified date")
+        checks = source.get("checks")
+        validation.check(isinstance(checks, list), f"documentation source {identifier} checks must be an array")
+        if isinstance(checks, list):
+            for check_index, check in enumerate(checks, 1):
+                validation.check(
+                    isinstance(check, dict)
+                    and set(check) == {"fact", "extractor", "pattern", "expected"},
+                    f"documentation source {identifier} check {check_index} fields drifted",
+                )
+                if not isinstance(check, dict):
+                    continue
+                validation.check(
+                    check.get("extractor") in {"contains", "regex_int", "regex_string"},
+                    f"documentation source {identifier} check {check_index} has invalid extractor",
+                )
+                validation.check(
+                    isinstance(check.get("fact"), str)
+                    and bool(check.get("fact"))
+                    and isinstance(check.get("pattern"), str)
+                    and bool(check.get("pattern")),
+                    f"documentation source {identifier} check {check_index} requires fact and pattern",
+                )
 
 
 def validate_skills(validation: Validation) -> None:

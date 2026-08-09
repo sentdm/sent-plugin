@@ -85,6 +85,10 @@ python3 scripts/generate_adapters.py
 python3 scripts/validate.py
 python3 scripts/test_validation_gates.py
 python3 scripts/test_fixtures.py
+python3 scripts/test_contracts.py
+python3 scripts/test_live_contract.py
 ```
 
 For current product and API behavior, use the [Sent MCP documentation](https://docs.sent.dm/start/llm-docs/mcp-server), the [machine-readable documentation index](https://docs.sent.dm/llms.txt), and the [Sent API reference](https://docs.sent.dm/reference/api).
+
+Live network checks are isolated from pull-request validation. The scheduled/manual/release freshness workflow compares normalized facts from the source catalog, classifies drift separately from source failures, and uploads a JSON diagnostic artifact.

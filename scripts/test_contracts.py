@@ -147,6 +147,23 @@ class DocumentationSourceContractTests(unittest.TestCase):
             self.assertTrue(set(source["affected_skills"]) <= set(metadata.skills))
             datetime.date.fromisoformat(source["last_verified"])
 
+    def test_network_monitoring_is_isolated_from_pr_validation(self) -> None:
+        validation = (ROOT / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+        freshness = (ROOT / ".github" / "workflows" / "documentation-freshness.yml").read_text(encoding="utf-8")
+        self.assertNotIn("schedule:", validation)
+        self.assertNotIn("python scripts/check_live_contract.py\n", validation)
+        for required in (
+            "workflow_dispatch:",
+            "release:",
+            "schedule:",
+            "python scripts/check_live_contract.py",
+            "--output artifacts/documentation-freshness.json",
+            "if: always()",
+            "actions/upload-artifact@",
+            "python scripts/run_model_routing_eval.py",
+        ):
+            self.assertIn(required, freshness)
+
 
 class BundledExampleTests(unittest.TestCase):
     def test_every_markdown_json_block_parses(self) -> None:
