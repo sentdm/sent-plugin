@@ -14,6 +14,7 @@ from types import ModuleType
 
 import generate_adapters as GENERATOR
 import repository_metadata as REPOSITORY_METADATA
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -82,6 +83,43 @@ class RepositoryMetadataContractTests(unittest.TestCase):
                 (output / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
             )
             self.assertEqual(marketplace["metadata"]["version"], "9.8.7")
+
+
+class SkillUiMetadataContractTests(unittest.TestCase):
+    def test_every_skill_has_unique_valid_openai_metadata(self) -> None:
+        metadata = REPOSITORY_METADATA.load_repository_metadata(ROOT)
+        display_names: set[str] = set()
+        descriptions: set[str] = set()
+        for name in metadata.skills:
+            path = SKILLS / name / "agents" / "openai.yaml"
+            with self.subTest(skill=name):
+                self.assertTrue(path.is_file(), path)
+                data = yaml.safe_load(path.read_text(encoding="utf-8"))
+                interface = data["interface"]
+                display_name = interface["display_name"].strip()
+                description = interface["short_description"].strip()
+                prompt = interface["default_prompt"].strip()
+                self.assertTrue(display_name)
+                self.assertTrue(description)
+                self.assertNotIn(display_name.casefold(), display_names)
+                self.assertNotIn(description.casefold(), descriptions)
+                self.assertEqual(re.findall(r"\$[a-z0-9-]+", prompt), [f"${name}"])
+                display_names.add(display_name.casefold())
+                descriptions.add(description.casefold())
+
+    def test_marketplace_prompts_include_specialists(self) -> None:
+        metadata = REPOSITORY_METADATA.load_repository_metadata(ROOT)
+        path = ROOT / "adapter-sources" / "shared" / "marketplace.json"
+        catalog = json.loads(path.read_text(encoding="utf-8"))
+        prompts = catalog["default_prompts"]
+        invoked = {
+            match.group(1)
+            for prompt in prompts
+            if (match := re.search(r"\$([a-z0-9-]+)", prompt))
+        }
+        specialists = set(metadata.skills) - set(metadata.tools_by_owner) - {"sent"}
+        self.assertGreaterEqual(len(invoked & specialists), 2)
+        self.assertEqual(catalog["website_url"], "https://github.com/sentdm/sent-plugin#readme")
 
 
 class BundledExampleTests(unittest.TestCase):

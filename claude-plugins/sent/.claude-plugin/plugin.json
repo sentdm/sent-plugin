@@ -6,7 +6,7 @@
     "name": "Sent",
     "url": "https://sent.dm"
   },
-  "homepage": "https://docs.sent.dm/start/llm-docs/mcp-server",
+  "homepage": "https://github.com/sentdm/sent-plugin#readme",
   "repository": "https://github.com/sentdm/sent-plugin",
   "license": "MIT",
   "keywords": [

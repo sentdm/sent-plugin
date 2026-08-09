@@ -63,6 +63,7 @@ def build(output_root: Path, source_root: Path = ROOT) -> None:
     package = source_root / "packages" / "sent"
     commands = source_root / "adapter-sources" / "claude" / "commands"
     adapter_readme = source_root / "adapter-sources" / "shared" / "README.md"
+    marketplace = read_json(source_root / "adapter-sources" / "shared" / "marketplace.json")
     metadata = load_repository_metadata(source_root)
     portable_manifest = read_json(package / "plugin.json")
     portable_mcp = read_json(package / "mcp.json")
@@ -112,22 +113,18 @@ def build(output_root: Path, source_root: Path = ROOT) -> None:
         "skills": "./skills/",
         "mcpServers": "./.mcp.json",
         "interface": {
-            "displayName": "Sent",
-            "shortDescription": "Business messaging workflows",
-            "longDescription": "Use Sent skills and its remote MCP server for safe messaging, contacts, templates, analytics, account readiness, SMS, WhatsApp, and RCS workflows.",
-            "developerName": "Sent",
-            "category": "Productivity",
-            "capabilities": ["Interactive", "Write"],
-            "websiteURL": "https://www.sent.dm",
-            "privacyPolicyURL": "https://www.sent.dm/en/legal/privacy-policy",
-            "termsOfServiceURL": "https://www.sent.dm/en/legal/terms-of-service",
+            "displayName": marketplace["display_name"],
+            "shortDescription": marketplace["short_description"],
+            "longDescription": marketplace["long_description"],
+            "developerName": marketplace["developer_name"],
+            "category": marketplace["category"],
+            "capabilities": marketplace["capabilities"],
+            "websiteURL": marketplace["website_url"],
+            "privacyPolicyURL": marketplace["privacy_policy_url"],
+            "termsOfServiceURL": marketplace["terms_of_service_url"],
             "logo": "./assets/logo.svg",
             "composerIcon": "./assets/logo.svg",
-            "defaultPrompt": [
-                "Check whether my account is ready to send and flag anything blocking me.",
-                "Summarize message volume and deliverability for the last 30 days.",
-                "Find an approved template, preview an SMS to a contact, and ask before sending."
-            ],
+            "defaultPrompt": marketplace["default_prompts"],
         },
     }
     adapter_mcp = {
@@ -154,7 +151,7 @@ def build(output_root: Path, source_root: Path = ROOT) -> None:
         output_root / ".agents" / "plugins" / "marketplace.json",
         {
             "name": "sent",
-            "interface": {"displayName": "Sent"},
+            "interface": {"displayName": marketplace["display_name"]},
             "plugins": [
                 {
                     "name": "sent",
@@ -174,7 +171,7 @@ def build(output_root: Path, source_root: Path = ROOT) -> None:
             "name": "sent",
             "owner": {"name": "Sent", "url": "https://sent.dm"},
             "metadata": {
-                "description": "Official Sent skills and remote MCP integration.",
+                "description": marketplace["marketplace_description"],
                 "version": version,
             },
             "plugins": [

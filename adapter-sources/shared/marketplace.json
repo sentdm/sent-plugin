@@ -1,0 +1,17 @@
+{
+  "display_name": "Sent",
+  "short_description": "Business messaging workflows",
+  "long_description": "Use Sent MCP operations for safe account, contact, template, analytics, and messaging workflows. Focused specialist skills add delivery diagnosis, Sender Profile architecture, US A2P 10DLC registration, WhatsApp Business onboarding and template authoring, RCS agent launch readiness, and cross-channel template-builder design.",
+  "developer_name": "Sent",
+  "category": "Productivity",
+  "capabilities": ["Interactive", "Write"],
+  "website_url": "https://github.com/sentdm/sent-plugin#readme",
+  "privacy_policy_url": "https://www.sent.dm/en/legal/privacy-policy",
+  "terms_of_service_url": "https://www.sent.dm/en/legal/terms-of-service",
+  "default_prompts": [
+    "Use $sent-account-readiness to check whether my Sent account is messaging-ready.",
+    "Use $messaging-performance-analyzer to diagnose this delivery report by channel.",
+    "Use $sms-10dlc-registration to review my US A2P registration evidence."
+  ],
+  "marketplace_description": "Official Sent skills and remote MCP integration for messaging operations and specialist channel workflows."
+}

@@ -5,7 +5,7 @@
     "url": "https://sent.dm"
   },
   "metadata": {
-    "description": "Official Sent skills and remote MCP integration.",
+    "description": "Official Sent skills and remote MCP integration for messaging operations and specialist channel workflows.",
     "version": "0.1.0"
   },
   "plugins": [

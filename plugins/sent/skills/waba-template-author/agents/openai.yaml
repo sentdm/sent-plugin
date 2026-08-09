@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sent WABA Template Author"
+  short_description: "Draft compliant WhatsApp templates"
+  default_prompt: "Use $waba-template-author to draft and validate a WhatsApp template payload."

@@ -76,10 +76,17 @@ def missing_root_mcp(root: Path) -> None:
 
 
 def missing_listing_url(root: Path) -> None:
-    path = root / "scripts" / "generate_adapters.py"
-    content = path.read_text(encoding="utf-8")
-    path.write_text(content.replace('            "websiteURL": "https://www.sent.dm",\n', ""), encoding="utf-8")
-    subprocess.run([sys.executable, str(path)], cwd=root, check=True, capture_output=True, text=True)
+    path = root / "adapter-sources" / "shared" / "marketplace.json"
+    catalog = json.loads(path.read_text(encoding="utf-8"))
+    catalog["website_url"] = "not-an-https-url"
+    path.write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
+    subprocess.run(
+        [sys.executable, str(root / "scripts" / "generate_adapters.py")],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
 
 def missing_readme_catalog_entry(root: Path) -> None:
@@ -97,6 +104,29 @@ def weak_skill_discovery_description(root: Path) -> None:
     lines = content.splitlines()
     lines[2] = "description: Sent analytics tools."
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def missing_skill_ui_metadata(root: Path) -> None:
+    (root / "packages" / "sent" / "skills" / "sent" / "agents" / "openai.yaml").unlink()
+
+
+def wrong_skill_default_prompt(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "sent-analytics" / "agents" / "openai.yaml"
+    content = path.read_text(encoding="utf-8")
+    path.write_text(content.replace("$sent-analytics", "$sent-messaging"), encoding="utf-8")
+
+
+def duplicate_skill_display_name(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "sent-analytics" / "agents" / "openai.yaml"
+    content = path.read_text(encoding="utf-8")
+    path.write_text(content.replace('display_name: "Sent Analytics"', 'display_name: "Sent Account Readiness"'), encoding="utf-8")
+
+
+def unsafe_marketplace_prompt(root: Path) -> None:
+    path = root / "adapter-sources" / "shared" / "marketplace.json"
+    catalog = json.loads(path.read_text(encoding="utf-8"))
+    catalog["default_prompts"][0] = "Use $sent-account-readiness to send a message."
+    path.write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
 
 
 def wrong_openai_test_count(root: Path) -> None:
@@ -175,6 +205,10 @@ CASES: tuple[tuple[str, Mutation, str], ...] = (
     ("required listing URLs", missing_listing_url, "Codex websiteURL must be an HTTPS URL"),
     ("README skill catalog coverage", missing_readme_catalog_entry, "skill catalog does not link"),
     ("skill discovery descriptions", weak_skill_discovery_description, "discovery description must explain"),
+    ("skill UI metadata coverage", missing_skill_ui_metadata, "missing agents/openai.yaml"),
+    ("exact skill prompt invocation", wrong_skill_default_prompt, "must invoke exactly $sent-analytics"),
+    ("unique skill display names", duplicate_skill_display_name, "display_name must be unique"),
+    ("non-mutating marketplace prompt", unsafe_marketplace_prompt, "must be non-mutating"),
     ("OpenAI test counts", wrong_openai_test_count, "exactly three negative test cases"),
     ("unexpected MCP tool", unexpected_public_tool, "OpenAI submission tool set mismatch"),
     ("invalid MCP tool owner", invalid_tool_owner, "is not a canonical skill"),
