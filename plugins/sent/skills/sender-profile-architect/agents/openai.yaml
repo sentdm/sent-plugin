@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sent Profile Architect"
+  short_description: "Design safe Sender Profile boundaries"
+  default_prompt: "Use $sender-profile-architect to design Sender Profile boundaries for this messaging system."

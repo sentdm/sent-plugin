@@ -6,7 +6,7 @@
     "name": "Sent",
     "url": "https://sent.dm"
   },
-  "homepage": "https://docs.sent.dm/start/llm-docs/mcp-server",
+  "homepage": "https://github.com/sentdm/sent-plugin#readme",
   "repository": "https://github.com/sentdm/sent-plugin",
   "license": "MIT",
   "keywords": [
@@ -34,22 +34,22 @@
   "interface": {
     "displayName": "Sent",
     "shortDescription": "Business messaging workflows",
-    "longDescription": "Use Sent skills and its remote MCP server for safe messaging, contacts, templates, analytics, account readiness, SMS, WhatsApp, and RCS workflows.",
+    "longDescription": "Use Sent MCP operations for safe account, contact, template, analytics, and messaging workflows. Focused specialist skills add delivery diagnosis, Sender Profile architecture, US A2P 10DLC registration, WhatsApp Business onboarding and template authoring, RCS agent launch readiness, and cross-channel template-builder design.",
     "developerName": "Sent",
     "category": "Productivity",
     "capabilities": [
       "Interactive",
       "Write"
     ],
-    "websiteURL": "https://www.sent.dm",
+    "websiteURL": "https://github.com/sentdm/sent-plugin#readme",
     "privacyPolicyURL": "https://www.sent.dm/en/legal/privacy-policy",
     "termsOfServiceURL": "https://www.sent.dm/en/legal/terms-of-service",
     "logo": "./assets/logo.svg",
     "composerIcon": "./assets/logo.svg",
     "defaultPrompt": [
-      "Check whether my account is ready to send and flag anything blocking me.",
-      "Summarize message volume and deliverability for the last 30 days.",
-      "Find an approved template, preview an SMS to a contact, and ask before sending."
+      "Use $sent-account-readiness to check whether my Sent account is messaging-ready.",
+      "Use $messaging-performance-analyzer to diagnose this delivery report by channel.",
+      "Use $sms-10dlc-registration to review my US A2P registration evidence."
     ]
   }
 }

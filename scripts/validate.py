@@ -24,6 +24,7 @@ SKILLS = PACKAGE / "skills"
 ROOT_SKILLS = ROOT / "skills"
 EVALS = ROOT / "evals"
 ADAPTER_README = ROOT / "adapter-sources" / "shared" / "README.md"
+MARKETPLACE_CONTENT = ROOT / "adapter-sources" / "shared" / "marketplace.json"
 SCHEMAS = ROOT / "schemas" / "agent-plugins" / "1.0.0"
 OPENAI_SUBMISSION_SCHEMA = ROOT / "schemas" / "openai" / "chatgpt-app-submission.v1.json"
 CONTRACT_MANIFEST = ROOT / "schemas" / "sent" / "v3-contract-manifest.json"
@@ -98,6 +99,8 @@ LEGACY_PRIVATE_NAMESPACE = "sent" + "-ops-skills:"
 MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 LOCAL_RESOURCE = re.compile(r"(?<![A-Za-z0-9_])(?:references|scripts)/[A-Za-z0-9_.\-/]+")
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SKILL_INVOCATION = re.compile(r"\$([a-z0-9]+(?:-[a-z0-9]+)*)")
+MUTATING_PROMPT = re.compile(r"\b(?:create|delete|launch|publish|register|send|submit|update|upload)\b", re.IGNORECASE)
 SVG_OPEN_TAG = re.compile(r"<svg\b[^>]*>", re.IGNORECASE)
 SVG_VIEWBOX = re.compile(r"\bviewBox\s*=\s*([\"'])([^\"']+)\1", re.IGNORECASE)
 JSON_FENCE = re.compile(r"```json\s*\n(.*?)```", re.DOTALL)
@@ -195,6 +198,12 @@ def validate_manifests(validation: Validation) -> None:
     for field in ("homepage", "repository"):
         value = plugin.get(field, "")
         validation.check(urlparse(value).scheme == "https", f"plugin {field} must use HTTPS")
+    if MARKETPLACE_CONTENT.is_file():
+        marketplace = load_json(MARKETPLACE_CONTENT)
+        validation.check(
+            plugin.get("homepage") == marketplace.get("website_url"),
+            "portable plugin homepage must match canonical marketplace website_url",
+        )
     author_url = plugin.get("author", {}).get("url", "")
     validation.check(urlparse(author_url).scheme == "https", "plugin author.url must use HTTPS")
     validation.check(urlparse(MCP_URL).scheme == "https", "MCP URL must use HTTPS")
@@ -284,6 +293,115 @@ def validate_skills(validation: Validation) -> None:
     dispatcher = (SKILLS / "sent" / "SKILL.md").read_text(encoding="utf-8")
     for routed_skill in EXPECTED_SKILLS - {"sent"}:
         validation.check(routed_skill in dispatcher, f"sent dispatcher does not route to {routed_skill}")
+
+
+def validate_skill_ui_metadata(validation: Validation) -> None:
+    display_names: set[str] = set()
+    descriptions: set[str] = set()
+    confirmation_skills = set(MUTATION_TOOLS.values())
+    prompts: dict[str, str] = {}
+    for name in sorted(EXPECTED_SKILLS):
+        path = SKILLS / name / "agents" / "openai.yaml"
+        validation.check(path.is_file(), f"{name}: missing agents/openai.yaml")
+        if not path.is_file():
+            continue
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except yaml.YAMLError as exc:
+            validation.errors.append(f"{path.relative_to(ROOT)}: invalid YAML: {exc}")
+            continue
+        interface = data.get("interface") if isinstance(data, dict) else None
+        validation.check(
+            isinstance(interface, dict)
+            and set(interface) == {"display_name", "short_description", "default_prompt"},
+            f"{path.relative_to(ROOT)}: interface requires display_name, short_description, and default_prompt",
+        )
+        if not isinstance(interface, dict):
+            continue
+        display_name = interface.get("display_name")
+        description = interface.get("short_description")
+        prompt = interface.get("default_prompt")
+        validation.check(
+            isinstance(display_name, str) and bool(display_name.strip()),
+            f"{name}: display_name must be non-empty",
+        )
+        validation.check(
+            isinstance(description, str) and bool(description.strip()),
+            f"{name}: short_description must be non-empty",
+        )
+        if isinstance(display_name, str) and display_name.strip():
+            normalized = display_name.strip().casefold()
+            validation.check(normalized not in display_names, f"{name}: display_name must be unique")
+            display_names.add(normalized)
+        if isinstance(description, str) and description.strip():
+            normalized = description.strip().casefold()
+            validation.check(normalized not in descriptions, f"{name}: short_description must be unique")
+            descriptions.add(normalized)
+        invocations = SKILL_INVOCATION.findall(prompt) if isinstance(prompt, str) else []
+        validation.check(
+            invocations == [name],
+            f"{name}: default_prompt must invoke exactly ${name}",
+        )
+        if isinstance(prompt, str):
+            prompts[name] = prompt
+            validation.check(
+                not MUTATING_PROMPT.search(prompt) or name in confirmation_skills,
+                f"{name}: default_prompt must remain non-mutating unless the skill owns confirmed mutations",
+            )
+
+    for required in ("sent-account-readiness", "sent-analytics", "sent-messaging"):
+        validation.check(required in prompts, f"{required}: discovery prompt is required")
+
+
+def validate_marketplace_content(validation: Validation) -> None:
+    validation.check(MARKETPLACE_CONTENT.is_file(), "missing canonical marketplace content source")
+    if not MARKETPLACE_CONTENT.is_file():
+        return
+    catalog = load_json(MARKETPLACE_CONTENT)
+    required = {
+        "display_name",
+        "short_description",
+        "long_description",
+        "developer_name",
+        "category",
+        "capabilities",
+        "website_url",
+        "privacy_policy_url",
+        "terms_of_service_url",
+        "default_prompts",
+        "marketplace_description",
+    }
+    validation.check(set(catalog) == required, "canonical marketplace content fields drifted")
+    validation.check(
+        catalog.get("website_url") == "https://github.com/sentdm/sent-plugin#readme",
+        "plugin homepage must use the GitHub README until a dedicated landing page exists",
+    )
+    long_description = str(catalog.get("long_description", "")).lower()
+    validation.check(
+        "mcp" in long_description and all(term in long_description for term in ("10dlc", "whatsapp", "rcs")),
+        "marketplace long description must balance MCP operations and specialist workflows",
+    )
+    prompts = catalog.get("default_prompts", [])
+    validation.check(isinstance(prompts, list) and 1 <= len(prompts) <= 3, "marketplace default prompts must contain 1..3 entries")
+    invoked: set[str] = set()
+    if isinstance(prompts, list):
+        for index, prompt in enumerate(prompts, 1):
+            matches = SKILL_INVOCATION.findall(prompt) if isinstance(prompt, str) else []
+            validation.check(
+                len(matches) == 1 and matches[0] in EXPECTED_SKILLS,
+                f"marketplace default prompt {index} must invoke exactly one canonical skill",
+            )
+            if matches:
+                invoked.add(matches[0])
+            validation.check(
+                isinstance(prompt, str) and not MUTATING_PROMPT.search(prompt),
+                f"marketplace default prompt {index} must be non-mutating",
+            )
+    specialists = EXPECTED_SKILLS - set(MCP_SKILLS) - {"sent"}
+    validation.check(
+        len(invoked & specialists) >= 2,
+        "marketplace starter prompts must expose at least two specialist skills",
+    )
 
 
 def validate_public_content(validation: Validation) -> None:
@@ -790,6 +908,8 @@ def main() -> None:
     validate_root_discovery(validation)
     validate_containment(validation)
     validate_skills(validation)
+    validate_skill_ui_metadata(validation)
+    validate_marketplace_content(validation)
     validate_public_content(validation)
     validate_skill_security_boundaries(validation)
     validate_tool_contract(validation)
