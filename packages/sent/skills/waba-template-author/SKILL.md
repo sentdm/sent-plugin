@@ -1,197 +1,168 @@
 ---
 name: waba-template-author
-description: Writes, classifies, and revises WhatsApp templates for Sent, including utility, marketing, and authentication category decisions, variable samples, component structure, rejection-risk review, and Sent template submission. Use when a user says WhatsApp template, WABA template, template category, utility vs marketing, authentication template, Meta rejection, template samples, buttons, or wants approved WhatsApp copy in Sent.
+description: Writes, classifies, validates, and repairs WhatsApp templates using the Sent v3 template definition contract. Use for utility, marketing, authentication, OTP, Meta review, rejected templates, variables, buttons, channel overrides, or submission-ready Sent payloads.
 ---
 
-<!--
-Verified against Sent sources:
-- https://docs.sent.dm/docs/docs/03-quickstart/first-template
-- https://docs.sent.dm/start/quickstart/first-message
-- https://docs.sent.dm/reference/api
-- Sent v3 OpenAPI: POST /v3/templates, GET /v3/templates, GET /v3/templates/{id}, PUT /v3/templates/{id}, DELETE /v3/templates/{id}, POST /v3/messages
+# WhatsApp Template Author
 
-Review notes:
-- Sent docs define templates across SMS, WhatsApp, and RCS, and state that WhatsApp templates require Meta approval.
-- Sent's surfaced template statuses are `APPROVED`, `PENDING`, `REJECTED` (snapshot Template Models section).
-- Sent's three template categories are `UTILITY`, `MARKETING`, `AUTHENTICATION` — no others.
-- Treat WhatsApp category rules, rejection reasons, the Meta-only `PAUSED` state, and Cloud API payloads as Meta-side policy/context. Sent does not surface `PAUSED`.
--->
+Use this skill to turn a messaging intent into a valid body for `POST /v3/templates`, review it for WhatsApp policy risk, and explain the resulting lifecycle. Sent's template request is not Meta's Cloud API `components[]` shape.
 
-# WABA template author
+## Source precedence
 
-## Overview
+When official sources disagree:
 
-Use this skill to write WhatsApp template content that can be represented as a Sent template, submitted for WhatsApp review where required, and later sent through `POST /v3/messages` with `template.id`. The skill’s job is not just to produce polished copy; it must choose the right category, structure components correctly, provide realistic sample values, and flag review risks before submission.
+1. Use the live Sent v3 OpenAPI for paths, request fields, and response shapes.
+2. Use the most specific current Sent guide for lifecycle and policy semantics.
+3. Preserve unknown provider values instead of forcing them into a closed enum.
 
-Sent stores templates as reusable message blueprints across SMS, WhatsApp, and RCS. WhatsApp review and category enforcement come from Meta, but the Sent-facing workflow uses Sent’s `/v3/templates` endpoints and Sent template statuses.
+The canonical references are the Sent template-definition guide, the v3 OpenAPI, and the webhook events reference. Do not use snapshot-era v2 examples.
 
-## When to use
+## Authoring workflow
 
-Use this skill when the user asks for WhatsApp template copy, WABA template creation, utility/marketing/authentication classification, template rejection fixes, variable samples, buttons, headers, template categories, Meta approval risk, or a Sent template payload for WhatsApp.
+### 1. Establish intent and category
 
-Do not use this skill to design the whole template-management UI; use `template-builder-ui`. Do not use it to connect a WABA or phone number; use `waba-embedded-signup`. Do not use it to register SMS compliance; use `sms-10dlc-registration`.
+Collect the business event, recipient expectation, requested action, language, channel overrides, and realistic sample values. Choose:
 
-## Category decision
+- `UTILITY` for a specific non-promotional transaction, account, or service event.
+- `MARKETING` for promotions, offers, re-engagement, product discovery, or mixed promotional content.
+- `AUTHENTICATION` for one-time verification codes and supported authentication flows.
 
-Pick the narrowest truthful WhatsApp category. Do not force promotional content into utility. The category should match the recipient’s expectation, the opt-in context, and the actual copy.
+If content mixes utility and promotion, classify it as marketing or split it. See [references/waba-template-categories.md](references/waba-template-categories.md).
 
-| Category | Use when | Avoid when |
-|---|---|---|
-| Utility | The message is tied to an existing transaction, account, order, appointment, or service request. | The copy includes upsell, acquisition, abandoned cart, discount, or broad engagement language. |
-| Marketing | The message promotes, re-engages, cross-sells, announces offers, or encourages optional action not tied to an existing transaction. | The message is purely required service/account information. |
-| Authentication | The message delivers one-time passcodes or verification flows. | The message includes non-authentication content or marketing. |
+### 2. Build the Sent create request
 
-**Example.** “Your order 1234 shipped and arrives tomorrow” is utility. “Your order shipped — add accessories for 20% off” is marketing risk because it adds promotional content.
+`POST /v3/templates` accepts these top-level fields:
 
-## Process
+| Field | Requirement |
+| --- | --- |
+| `definition` | Required. Contains `header`, `body`, `footer`, `buttons`, optional `definitionVersion`, and optional `authenticationConfig`. |
+| `category` | Optional: `UTILITY`, `MARKETING`, or `AUTHENTICATION`; omit for detection only when ambiguity is acceptable. |
+| `language` | Optional locale such as `en_US`. |
+| `creation_source` | Optional source string; `from-api` is the documented default. |
+| `submit_for_review` | Optional Boolean; default `false`. Draft and validate before review. |
+| `sandbox` | Optional Boolean for validation without side effects. |
 
-### 1. Capture the business intent
+Do not put `name`, `channels`, `body`, `header`, `buttons`, or `components` at the request root. `name` exists on update/response surfaces, not on the current create request.
 
-Ask what event triggers the template, who receives it, what action the recipient should take, and whether the message contains any promotion. Write those answers before drafting copy.
-
-A strong intent statement is specific: “Send a delivery reschedule link after a courier misses the first attempt.” A weak one says: “Notify users about updates.”
-
-### 2. Choose the category before writing copy
-
-Drafting before category selection often creates copy that fails review. Choose utility, marketing, or authentication first, then write within that boundary.
-
-If the user wants utility but includes promotional language, explain the conflict and offer two options: remove promotion and keep utility, or keep promotion and classify as marketing.
-
-### 3. Draft the component structure
-
-Represent the template in Sent-compatible component language: header, body, footer, buttons, variables, and samples. Keep the component set as simple as the use case allows.
-
-| Component | Guidance |
-|---|---|
-| Header | Use only when it clarifies identity or context. Avoid promotional headers for utility templates. |
-| Body | Put the required message and variables here. Keep the first sentence clear without needing the button. |
-| Footer | Use for low-emphasis context such as opt-out or support where appropriate. |
-| Buttons | Use quick replies or call-to-action buttons only when they directly support the message intent. |
-| Variables | Use stable names and provide realistic samples for every variable. |
-
-### 4. Write with review risk in mind
-
-Use concise, literal copy. Avoid vague urgency, misleading scarcity, or mixed intents. Do not include sensitive data unless the use case requires it and the customer confirms it is acceptable.
-
-**Utility example.**
-
-```text
-Name: order_shipped_update
-Category: Utility
-Language: en_US
-Body: Hi {{first_name}}, your {{brand_name}} order {{order_id}} has shipped and is expected on {{delivery_date}}. Track it here: {{tracking_url}}.
-Samples:
-  first_name: Alex
-  brand_name: Acme
-  order_id: A12345
-  delivery_date: May 22
-  tracking_url: https://acme.example/t/A12345
-Button: Track order -> {{tracking_url}}
+```json
+{
+  "category": "UTILITY",
+  "language": "en_US",
+  "definition": {
+    "header": null,
+    "body": {
+      "multiChannel": {
+        "type": "body",
+        "template": "Hi {{0:variable}}, order {{1:variable}} has shipped.",
+        "variables": [
+          {
+            "id": 0,
+            "name": "customerName",
+            "type": "variable",
+            "props": {"sample": "Avery"}
+          },
+          {
+            "id": 1,
+            "name": "orderNumber",
+            "type": "variable",
+            "props": {"sample": "A-1042"}
+          }
+        ]
+      },
+      "sms": null,
+      "whatsapp": null,
+      "rcs": null
+    },
+    "footer": null,
+    "buttons": null,
+    "definitionVersion": "1.0",
+    "authenticationConfig": null
+  },
+  "creation_source": "from-api",
+  "submit_for_review": false,
+  "sandbox": true
+}
 ```
 
-**Marketing example.**
+Use `definition.body.multiChannel` as the channel-neutral body. `sms`, `whatsapp`, and `rcs` are complete channel overrides, not fragments. Keep each body at or below 1,024 characters.
 
-```text
-Name: spring_sale_announcement
-Category: Marketing
-Language: en_US
-Body: Hi {{first_name}}, {{brand_name}} spring deals are live. Use code {{promo_code}} by {{end_date}} to save on selected items.
-Samples:
-  first_name: Alex
-  brand_name: Acme
-  promo_code: SPRING20
-  end_date: May 31
-Button: Shop now -> https://acme.example/sale
+### 3. Define variables exactly
+
+Use placeholders such as `{{0:variable}}`, `{{1:link}}`, or `{{2:media}}`. Each placeholder needs one matching definition with:
+
+- a unique non-negative integer `id`;
+- a readable `name`;
+- a matching `type`;
+- `props.sample` with realistic review and preview data.
+
+Keep placeholder IDs and variable IDs aligned inside every body override. Never output naked `{{1}}` placeholders in a Sent request.
+
+### 4. Add supported buttons
+
+Sent currently recognizes `QUICK_REPLY`, `URL`, `VOICE_CALL`, `PHONE_NUMBER`, and `COPY_CODE`. Enforce:
+
+- 10 buttons total;
+- at most 2 URL buttons;
+- at most 1 voice-call button;
+- at most 1 phone-number button;
+- at most 1 copy-code button;
+- quick replies may use the remaining slots, up to the total of 10.
+
+Buttons use `id`, `type`, and `props`. Labels are at most 25 characters. Require type-specific properties: `quickReplyType`; `urlType` and `url`; `countryCode` and `phoneNumber`; or `offerCode`. Quick replies and calls-to-action may coexist—do not invent an XOR rule.
+
+### 5. Handle authentication templates
+
+For `AUTHENTICATION`, use `definition.authenticationConfig`:
+
+```json
+{
+  "addSecurityRecommendation": true,
+  "codeExpirationMinutes": 10
+}
 ```
 
-### 5. Convert the draft into a Sent template operation
+Expiration is 1–90 minutes. Keep authentication content to the verification purpose, use one code variable and the supported copy-code action, and do not add marketing language, unrelated links, media, or promotional buttons.
 
-Use Sent’s template API for creation and lifecycle management. The verified operations are:
+### 6. Validate before submission
 
-| Operation | Endpoint | Use |
-|---|---|---|
-| Create template | `POST /v3/templates` | Save a draft or submit a new template. |
-| List templates | `GET /v3/templates` | Find templates by search, status, or category. |
-| Retrieve template | `GET /v3/templates/{id}` | Inspect status and definition. |
-| Update template | `PUT /v3/templates/{id}` | Revise name, category, language, definition, or submit for review. |
-| Delete template | `DELETE /v3/templates/{id}` | Delete the Sent template, optionally deleting from Meta where supported. |
+Run:
 
-Use Sent’s documented template statuses in user-facing instructions: `PENDING`, `APPROVED`, `REJECTED` (per the Sent docs snapshot, Template Models section). Sent does **not** surface `PAUSED` — that is Meta-side only. If Meta returns additional statuses for a WhatsApp account, quote them as Meta-side evidence rather than Sent-surfaced statuses.
+```bash
+python scripts/lint_waba_template.py template.json
+```
 
-### 6. Add variable samples before submission
+The linter validates the Sent request shape, variables, the 1,024-character limit, channel overrides, every current button type, per-type limits, and authentication configuration. A Meta Cloud API example with `components[]` must fail with an explicit conversion error.
 
-Every placeholder needs a realistic sample. Samples should look like production data and should not add claims that the body does not support.
+Use `sandbox: true` and `submit_for_review: false` while integrating. When the user is ready for provider review, show the final payload and explain that submission changes external state before proceeding.
 
-**Bad sample pattern.** Body says “Your appointment is confirmed,” but sample data includes “50% off visit.” This can create category confusion.
+### 7. Track the right lifecycle surface
 
-**Good sample pattern.** Body and sample values all support the same transactional use case.
+Sent template resources use the known states `DRAFT`, `PENDING`, `APPROVED`, `REJECTED`, and `PAUSED`. Do not claim this is every value the API may ever return.
 
-### 7. Revise rejected templates from the reason, not from guesses
+Template webhooks are WhatsApp approval events. They use `field: "templates"`, omit `sub_type` and `event`, and carry the provider status in `payload.status`:
 
-If a template is rejected, retrieve the Sent template detail/status and any available rejection reason. Then change only what the reason justifies. Category mismatch, missing samples, unsupported components, and promotional language in utility templates require different fixes.
+```json
+{
+  "field": "templates",
+  "timestamp": "2026-08-09T12:00:00Z",
+  "payload": {
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "template_id": "11111111-1111-1111-1111-111111111111",
+    "template_name": "order_update",
+    "whatsapp_template_id": "2222222222222222",
+    "status": "APPROVED",
+    "language": "en_US",
+    "category": "UTILITY",
+    "channel": "whatsapp",
+    "reason": null
+  }
+}
+```
 
-| Rejection symptom | Likely correction |
-|---|---|
-| Category mismatch | Change category or remove conflicting copy. |
-| Missing/weak samples | Add realistic variable samples. |
-| Unsupported component | Simplify header/buttons or split channel variants. |
-| Policy concern | Remove misleading, sensitive, or prohibited content. |
-| Language mismatch | Correct language code and localized text. |
+Common forwarded values include `PENDING`, `APPROVED`, `REJECTED`, and `CATEGORY_UPDATED`. Meta can also send values such as `PAUSED` or `DISABLED`. Persist the raw string, handle known values, and safely surface unknown ones. See [references/template-rejection-playbook.md](references/template-rejection-playbook.md).
 
-### 8. Confirm sendability after approval
+## Boundaries
 
-After approval, confirm the template can be used with the intended Sender Profile/channel and sent through `POST /v3/messages` with `template.id`. If delivery later fails, hand off to `messaging-performance-analyzer` rather than rewriting approved copy blindly.
+Use `template-builder-ui` for editor architecture and client-side validation UX. Use `sent-templates` to list, inspect, or delete existing templates through the connected Sent tools. Use `waba-embedded-signup` for WABA connection. Use `rcs-agent-onboarding` for current RCS launch capabilities.
 
-## Common rationalizations to avoid
-
-Do not call a template utility if it includes discounts, upsells, abandoned-cart messaging, or broad engagement language.
-
-Do not omit sample values because the placeholders are obvious. Review and test flows need rendered examples.
-
-Do not treat Meta Cloud API payload examples as the Sent API contract. Use Sent `/v3/templates` for Sent integrations.
-
-Do not introduce `PAUSED` as a Sent template status. Sent surfaces only `APPROVED`, `PENDING`, and `REJECTED` — PAUSED is Meta-side and is not reflected in the Sent template status. When Meta pauses, the Sent status stays as it was, and individual sends start failing instead — diagnose via `messaging-performance-analyzer`.
-
-Do not rewrite a rejected template without reading the actual rejection reason when available.
-
-## Verification checklist
-
-- [ ] The trigger event, audience, recipient action, and promotional content are documented.
-- [ ] Category is chosen before copy is drafted.
-- [ ] The body is clear without relying on a button.
-- [ ] Every variable has a realistic sample value.
-- [ ] Component choices match the selected channel and use case.
-- [ ] Sent template API endpoints are used for create/list/get/update/delete.
-- [ ] Status handling uses only Sent's surfaced set — `APPROVED`, `PENDING`, `REJECTED` (no `PAUSED`).
-- [ ] Rejection fixes map to observed reasons, not generic rewrites.
-- [ ] Approved templates are tested through Sent sending with `template.id` before broad rollout.
-
-## Related skills
-
-Use `template-builder-ui` when the task is UI design, component validation, JSON editor behavior, or template-management product specs.
-
-Use `waba-embedded-signup` when the WhatsApp sender/WABA/phone number is not connected to Sent yet.
-
-Use `sender-profile-architect` when the template belongs to a specific tenant, brand, department, or profile boundary.
-
-Use `sms-10dlc-registration` when WhatsApp copy will be mirrored to SMS and must align with US A2P use-case registration.
-
-Use `messaging-performance-analyzer` when approved WhatsApp templates have poor delivery, read, or webhook outcomes.
-
-Use the `sent` skill for shared Sent terminology and routing.
-
-## Bundled references and scripts
-
-| File | Type | Purpose |
-|---|---|---|
-| `references/waba-template-categories.md` | Policy lookup table | Meta category boundaries, component rules, and Cloud API submission shape. |
-| `references/waba-template-examples.md` | Worked examples | Copy-pasteable payloads for utility, marketing, and authentication templates. |
-| `references/template-rejection-playbook.md` | Decision matrix | Map rejection reasons to precise edits and resubmission etiquette. |
-| `scripts/lint_waba_template.py` | Validation script | Stdlib lint for a template JSON payload (placeholder numbering, samples, category-risk phrases, button structure, language code). Run from the skill root: `python scripts/lint_waba_template.py template.json`. |
-| `scripts/fixtures/utility_good.json` | Fixture | Passing fixture for the linter. |
-| `scripts/fixtures/utility_bad.json` | Fixture | Failing fixture (wrong placeholder order, promo phrasing in utility). |
-
-## Unverified claims to confirm or remove
-
-- Exact category-pricing behavior and Meta rejection-code semantics are external Meta policy context, not Sent API facts.
-- Cross-check the Sent template schema against the live OpenAPI at `https://docs.sent.dm` before promoting code to production.
+Meta Cloud API payloads may appear in [references/waba-template-examples.md](references/waba-template-examples.md), but every such example must be clearly labelled non-Sent and must never be passed to the Sent linter as a valid request.

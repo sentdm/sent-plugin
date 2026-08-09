@@ -106,6 +106,37 @@ def wrong_openai_test_count(root: Path) -> None:
     path.write_text(json.dumps(submission, indent=2) + "\n", encoding="utf-8")
 
 
+def retired_brand_endpoint(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "sms-10dlc-registration" / "SKILL.md"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write("\nUse POST /v3/brands for registration.\n")
+
+
+def template_sub_type(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "template-builder-ui" / "references" / "template-status-handling.md"
+    content = path.read_text(encoding="utf-8")
+    path.write_text(content.replace('  "field": "templates",\n', '  "field": "templates",\n  "sub_type": "template.approved",\n', 1), encoding="utf-8")
+
+
+def ordered_channel_fallback(root: Path) -> None:
+    path = root / "packages" / "sent" / "skills" / "rcs-agent-onboarding" / "SKILL.md"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write('\nUse ["rcs", "sms"] as ordered fallback.\n')
+
+
+def thick_claude_command(root: Path) -> None:
+    path = root / "adapter-sources" / "claude" / "commands" / "rcs-onboard.md"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write("\nThen follow a provider-specific provisioning procedure.\n")
+
+
+def contract_manifest_drift(root: Path) -> None:
+    path = root / "schemas" / "sent" / "v3-contract-manifest.json"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["template_create"]["body_max_length"] = 1028
+    path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+
 CASES: tuple[tuple[str, Mutation, str], ...] = (
     ("closed portable manifest", unknown_manifest_field, "plugin.json schema"),
     ("HTTPS MCP policy", insecure_mcp_url, "exact Sent Streamable HTTP endpoint"),
@@ -120,6 +151,11 @@ CASES: tuple[tuple[str, Mutation, str], ...] = (
     ("README skill catalog coverage", missing_readme_catalog_entry, "skill catalog does not link"),
     ("skill discovery descriptions", weak_skill_discovery_description, "discovery description must explain"),
     ("OpenAI test counts", wrong_openai_test_count, "exactly three negative test cases"),
+    ("retired brand endpoint", retired_brand_endpoint, "retired endpoint"),
+    ("template webhook envelope", template_sub_type, "template webhook example uses sub_type"),
+    ("ordered channel fallback", ordered_channel_fallback, "explicit RCS/SMS array"),
+    ("thin Claude command", thick_claude_command, "thin wrapper"),
+    ("checked-in contract manifest", contract_manifest_drift, "template body limit must be 1,024"),
 )
 
 

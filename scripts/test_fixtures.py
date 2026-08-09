@@ -36,6 +36,18 @@ CASES = (
         1,
     ),
     (
+        "10DLC campaign good",
+        SKILLS / "sms-10dlc-registration" / "scripts" / "validate_campaign_payload.py",
+        SKILLS / "sms-10dlc-registration" / "scripts" / "fixtures" / "campaign_good.json",
+        0,
+    ),
+    (
+        "10DLC campaign bad",
+        SKILLS / "sms-10dlc-registration" / "scripts" / "validate_campaign_payload.py",
+        SKILLS / "sms-10dlc-registration" / "scripts" / "fixtures" / "campaign_bad.json",
+        1,
+    ),
+    (
         "WABA template good",
         SKILLS / "waba-template-author" / "scripts" / "lint_waba_template.py",
         SKILLS / "waba-template-author" / "scripts" / "fixtures" / "utility_good.json",
@@ -69,7 +81,7 @@ def main() -> None:
             print(f"PASS {label}: exit {expected}")
     if failures:
         raise SystemExit("\n\n".join(failures))
-    print("Fixture contract preserved: MDR 0/3, 10DLC 0/1, WABA template 0/1.")
+    print("Fixture contract preserved: MDR 0/3, 10DLC evidence 0/1, campaign 0/1, WABA template 0/1.")
 
 
 if __name__ == "__main__":

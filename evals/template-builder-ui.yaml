@@ -6,9 +6,12 @@ cases:
   - query: "Build me a live WhatsApp-style preview component with header / body / footer / buttons."
     expect: trigger
     rationale: Component editor + WhatsApp preview — explicit "Use when" triggers in the description.
-  - query: "How do I port Meta's template-submission rules into client-side form validation?"
+  - query: "How do I serialize our editor into Sent's definition.body.multiChannel contract?"
     expect: trigger
-    rationale: Client-side validation of Meta submission rules — explicitly called out in the description.
+    rationale: Client-side serialization and validation of the current Sent request contract is core scope.
+  - query: "Should our RCS editor expose rich cards and carousels as current Sent features?"
+    expect: trigger
+    rationale: Hard capability negative; current builder guidance is text plus up to four suggestion chips.
   - query: "Help me build a Handlebars template for a transactional email."
     expect: no_trigger
     rationale: Handlebars / email templating is generic web templating, not WhatsApp template authoring UI. "Template" keyword overlap only.

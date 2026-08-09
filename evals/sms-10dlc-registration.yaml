@@ -1,14 +1,17 @@
 skill: sms-10dlc-registration
 cases:
-  - query: "How do I register a brand and campaign with TCR?"
+  - query: "How do I create a dedicated brand on a Sender Profile and then register its campaign?"
     expect: trigger
-    rationale: Direct TCR brand+campaign registration ask — the primary path this skill walks.
+    rationale: Direct current-profile resource model for TCR brand and campaign registration.
   - query: "Our 10DLC campaign keeps getting filtered by T-Mobile — what's wrong?"
     expect: trigger
     rationale: Carrier filtering + 10DLC keywords from the description; this skill covers vetting-score and rejection-debugging.
   - query: "What use-case category should I pick for shipping notifications on TCR?"
     expect: trigger
     rationale: Campaign use-case classification — covered explicitly by this skill.
+  - query: "Create my campaign through a standalone v3 brand endpoint."
+    expect: trigger
+    rationale: Hard endpoint negative; the skill must reject the retired standalone-brand model and use profile campaign paths.
   - query: "Help me with European SMS sender ID registration."
     expect: no_trigger
     rationale: TCR / 10DLC is US-only. EU sender-ID registration is a different regulatory regime (e.g. UK MEF, France's "Numérotation") and out of scope.

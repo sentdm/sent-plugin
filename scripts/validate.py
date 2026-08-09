@@ -24,6 +24,7 @@ EVALS = ROOT / "evals"
 ADAPTER_README = ROOT / "adapter-sources" / "shared" / "README.md"
 SCHEMAS = ROOT / "schemas" / "agent-plugins" / "1.0.0"
 OPENAI_SUBMISSION_SCHEMA = ROOT / "schemas" / "openai" / "chatgpt-app-submission.v1.json"
+CONTRACT_MANIFEST = ROOT / "schemas" / "sent" / "v3-contract-manifest.json"
 VERSION = "0.1.0"
 MCP_URL = "https://mcp.sent.dm/mcp"
 PLUGIN_SCHEMA_ID = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
@@ -151,6 +152,25 @@ LOCAL_RESOURCE = re.compile(r"(?<![A-Za-z0-9_])(?:references|scripts)/[A-Za-z0-9
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SVG_OPEN_TAG = re.compile(r"<svg\b[^>]*>", re.IGNORECASE)
 SVG_VIEWBOX = re.compile(r"\bviewBox\s*=\s*([\"'])([^\"']+)\1", re.IGNORECASE)
+JSON_FENCE = re.compile(r"```json\s*\n(.*?)```", re.DOTALL)
+TEMPLATE_REQUEST_FENCE = re.compile(
+    r"<!-- sent-template-request -->\s*```json\s*\n(.*?)```",
+    re.DOTALL,
+)
+CAMPAIGN_REQUEST_FENCE = re.compile(
+    r"<!-- sent-campaign-request -->\s*```json\s*\n(.*?)```",
+    re.DOTALL,
+)
+CLAUDE_COMMAND_SKILLS = {
+    "mdr-analyze": "messaging-performance-analyzer",
+    "rcs-onboard": "rcs-agent-onboarding",
+    "sender-plan": "sender-profile-architect",
+    "sent": "sent",
+    "sms-register": "sms-10dlc-registration",
+    "template-ui": "template-builder-ui",
+    "waba-auth": "waba-embedded-signup",
+    "waba-template": "waba-template-author",
+}
 
 
 class Validation:
@@ -459,6 +479,154 @@ def validate_evals(validation: Validation) -> None:
             )
 
 
+def validate_contract_manifest(validation: Validation) -> None:
+    validation.check(CONTRACT_MANIFEST.is_file(), "missing checked-in Sent v3 contract manifest")
+    if not CONTRACT_MANIFEST.is_file():
+        return
+    manifest = load_json(CONTRACT_MANIFEST)
+    validation.check(manifest.get("manifest_version") == 1, "Sent contract manifest version must be 1")
+    validation.check(
+        manifest.get("source") == "https://api.sent.dm/swagger/v3/swagger.json",
+        "Sent contract manifest must identify the live v3 OpenAPI source",
+    )
+    paths = manifest.get("critical_paths", {})
+    expected_paths = {
+        "/v3/templates",
+        "/v3/templates/{id}",
+        "/v3/profiles",
+        "/v3/profiles/{profileId}",
+        "/v3/profiles/{profileId}/complete",
+        "/v3/profiles/{profileId}/campaigns",
+        "/v3/profiles/{profileId}/campaigns/{campaignId}",
+        "/v3/messages",
+        "/v3/messages/{id}",
+        "/v3/messages/{id}/activities",
+        "/v3/webhooks",
+        "/v3/webhooks/event-types",
+    }
+    validation.check(set(paths) == expected_paths, "Sent contract manifest critical path set drifted")
+
+    template = manifest.get("template_create", {})
+    validation.check(template.get("required_fields") == ["definition"], "template create must require definition")
+    validation.check(template.get("body_max_length") == 1024, "template body limit must be 1,024")
+    validation.check(
+        set(template.get("button_types", []))
+        == {"QUICK_REPLY", "URL", "VOICE_CALL", "PHONE_NUMBER", "COPY_CODE"},
+        "template button type manifest drifted",
+    )
+    validation.check(template.get("button_limits", {}).get("total") == 10, "template button total must be 10")
+    validation.check(
+        template.get("resource_statuses") == ["DRAFT", "PENDING", "APPROVED", "REJECTED", "PAUSED"],
+        "template resource statuses drifted",
+    )
+    webhook = manifest.get("template_webhook", {})
+    validation.check(webhook.get("field") == "templates", "template webhook field must be templates")
+    validation.check(
+        set(webhook.get("forbidden_envelope_fields", [])) == {"sub_type", "event"},
+        "template webhook must forbid sub_type and event",
+    )
+
+    auth = manifest.get("authentication", {})
+    validation.check(auth.get("required_header") == "x-api-key", "v3 authentication header drifted")
+    validation.check(auth.get("organization_scope_header") == "x-profile-id", "profile scope header drifted")
+    validation.check(auth.get("profile_key_scope_header_result") == 403, "profile key x-profile-id result must be 403")
+
+    campaign = manifest.get("campaign", {})
+    validation.check(len(campaign.get("use_case_values", [])) == 13, "campaign manifest must contain 13 use cases")
+    validation.check(
+        (campaign.get("sample_min"), campaign.get("sample_max"), campaign.get("sample_max_length")) == (1, 5, 1024),
+        "campaign sample limits drifted",
+    )
+    validation.check(campaign.get("volume_tier_boundary") == 2000, "campaign volume tier boundary must be 2,000")
+    validation.check(
+        campaign.get("statuses") == ["SENT_CREATED", "ACTIVE", "EXPIRED"]
+        and campaign.get("submission_field") == "submittedToTCR",
+        "campaign status/submission manifest drifted",
+    )
+    routing = manifest.get("routing", {})
+    validation.check(routing.get("multiple_explicit_channels") == "broadcast", "multiple channels must be broadcast")
+
+
+def validate_contract_content(validation: Validation) -> None:
+    manifest = load_json(CONTRACT_MANIFEST) if CONTRACT_MANIFEST.is_file() else {}
+    markdown_files = list(SKILLS.rglob("*.md"))
+    corpus = "\n".join(path.read_text(encoding="utf-8") for path in markdown_files)
+    for retired in manifest.get("retired_guidance_paths", []):
+        validation.check(retired not in corpus, f"canonical skills contain retired endpoint {retired}")
+    for pattern in (
+        r'\[\s*"rcs"\s*,\s*"sms"\s*\]',
+        r'\[\s*"sms"\s*,\s*"rcs"\s*\]',
+    ):
+        validation.check(not re.search(pattern, corpus), "canonical skills describe an explicit RCS/SMS array; use automatic routing")
+
+    json_count = 0
+    template_count = 0
+    campaign_count = 0
+    for path in markdown_files:
+        text = path.read_text(encoding="utf-8")
+        for index, match in enumerate(JSON_FENCE.finditer(text), 1):
+            json_count += 1
+            try:
+                value = json.loads(match.group(1))
+            except json.JSONDecodeError as exc:
+                validation.errors.append(f"{path.relative_to(ROOT)}: JSON example {index} is invalid: {exc}")
+                continue
+            if isinstance(value, dict) and value.get("field") == "templates":
+                validation.check("sub_type" not in value, f"{path.relative_to(ROOT)}: template webhook example uses sub_type")
+                validation.check("event" not in value, f"{path.relative_to(ROOT)}: template webhook example uses event")
+            if path.parts[-3:-1] == ("waba-embedded-signup", "references") and isinstance(value, dict):
+                validation.check("sub_type" not in value, f"{path.relative_to(ROOT)}: WABA callback example uses sub_type")
+        template_count += len(TEMPLATE_REQUEST_FENCE.findall(text))
+        campaign_count += len(CAMPAIGN_REQUEST_FENCE.findall(text))
+    validation.check(json_count > 0, "no JSON examples found for contract parsing")
+    validation.check(template_count >= 2, "expected at least two marked Sent template request examples")
+    validation.check(campaign_count >= 1, "expected at least one marked Sent campaign request example")
+
+    contract_tests = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "test_contracts.py")],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    validation.check(
+        contract_tests.returncode == 0,
+        contract_tests.stdout.strip() + "\n" + contract_tests.stderr.strip()
+        if contract_tests.returncode
+        else "contract tests failed",
+    )
+
+
+def validate_claude_command_sources(validation: Validation) -> None:
+    command_root = ROOT / "adapter-sources" / "claude" / "commands"
+    actual = {path.stem for path in command_root.glob("*.md")}
+    validation.check(actual == set(CLAUDE_COMMAND_SKILLS), f"Claude command source set mismatch: {sorted(actual)}")
+    for command, expected_skill in CLAUDE_COMMAND_SKILLS.items():
+        path = command_root / f"{command}.md"
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        try:
+            _, raw_frontmatter, body = text.split("---", 2)
+            metadata = yaml.safe_load(raw_frontmatter)
+        except (ValueError, yaml.YAMLError) as exc:
+            validation.errors.append(f"{path.relative_to(ROOT)}: invalid command frontmatter: {exc}")
+            continue
+        validation.check(
+            isinstance(metadata, dict) and set(metadata) == {"description"},
+            f"{path.relative_to(ROOT)}: command frontmatter must contain only description",
+        )
+        expected_body = (
+            f"Invoke the `{expected_skill}` skill with the user's request unchanged:\n\n"
+            "$ARGUMENTS"
+        )
+        validation.check(
+            body.strip() == expected_body,
+            f"{path.relative_to(ROOT)}: command must be a thin wrapper around exactly one canonical skill",
+        )
+        validation.check(expected_skill in EXPECTED_SKILLS, f"{path.relative_to(ROOT)}: referenced skill does not exist")
+
+
 def validate_adapters(validation: Validation) -> None:
     result = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "generate_adapters.py"), "--check"],
@@ -628,6 +796,9 @@ def main() -> None:
     validate_tool_contract(validation)
     validate_documentation(validation)
     validate_evals(validation)
+    validate_contract_manifest(validation)
+    validate_contract_content(validation)
+    validate_claude_command_sources(validation)
     validate_adapters(validation)
     validate_openai_submission(validation)
     validation.finish()

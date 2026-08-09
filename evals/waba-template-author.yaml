@@ -9,6 +9,9 @@ cases:
   - query: "Draft a WhatsApp template for a one-time password (OTP) message."
     expect: trigger
     rationale: OTP / authentication template authoring — explicitly listed use case in the description.
+  - query: "Convert this Meta components array into a valid Sent POST /v3/templates definition payload."
+    expect: trigger
+    rationale: Hard contract-conversion case; Cloud API components must not be mistaken for the Sent create request.
   - query: "Help me draft a Jinja2 email template for our welcome series."
     expect: no_trigger
     rationale: Jinja2 / email templating is generic templating, not WABA template authoring. "Template" keyword overlap only.

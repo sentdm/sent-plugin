@@ -1,27 +1,80 @@
 {
-  "name": "shipping_update_v2",
-  "language": "en_US",
   "category": "UTILITY",
-  "components": [
-    {
-      "type": "BODY",
-      "text": "Hi {{1}}, package #{{2}} is out for delivery and should arrive by {{3}}.",
-      "example": { "body_text": [["Jordan", "A1029", "6 PM today"]] }
+  "language": "en_US",
+  "definition": {
+    "header": {
+      "type": "text",
+      "template": "Order update",
+      "variables": []
     },
-    {
-      "type": "FOOTER",
-      "text": "Reply STOP to opt out."
+    "body": {
+      "multiChannel": {
+        "type": "body",
+        "template": "Hi {{0:variable}}, order {{1:variable}} is ready.",
+        "variables": [
+          {
+            "id": 0,
+            "name": "customerName",
+            "type": "variable",
+            "props": {"sample": "Avery"}
+          },
+          {
+            "id": 1,
+            "name": "orderNumber",
+            "type": "variable",
+            "props": {"sample": "A-1042"}
+          }
+        ]
+      },
+      "sms": {
+        "type": "body",
+        "template": "Order {{1:variable}} is ready.",
+        "variables": [
+          {
+            "id": 1,
+            "name": "orderNumber",
+            "type": "variable",
+            "props": {"sample": "A-1042"}
+          }
+        ]
+      }
     },
-    {
-      "type": "BUTTONS",
-      "buttons": [
-        {
-          "type": "URL",
-          "text": "Track package",
-          "url": "https://example.com/track/{{1}}",
-          "example": ["https://example.com/track/A1029"]
-        }
-      ]
-    }
-  ]
+    "footer": {
+      "type": "text",
+      "template": "Acme Support",
+      "variables": []
+    },
+    "buttons": [
+      {
+        "id": 1,
+        "type": "QUICK_REPLY",
+        "props": {"text": "Got it", "quickReplyType": "custom"}
+      },
+      {
+        "id": 2,
+        "type": "URL",
+        "props": {"text": "Track order", "urlType": "static", "url": "https://example.com/track"}
+      },
+      {
+        "id": 3,
+        "type": "VOICE_CALL",
+        "props": {"text": "Voice support", "countryCode": "US", "phoneNumber": "+12025550100"}
+      },
+      {
+        "id": 4,
+        "type": "PHONE_NUMBER",
+        "props": {"text": "Call support", "countryCode": "US", "phoneNumber": "+12025550101"}
+      },
+      {
+        "id": 5,
+        "type": "COPY_CODE",
+        "props": {"text": "Copy reference", "offerCode": "A-1042"}
+      }
+    ],
+    "definitionVersion": "1.0",
+    "authenticationConfig": null
+  },
+  "creation_source": "from-api",
+  "submit_for_review": false,
+  "sandbox": true
 }

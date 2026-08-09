@@ -1,0 +1,126 @@
+{
+  "manifest_version": 1,
+  "source": "https://api.sent.dm/swagger/v3/swagger.json",
+  "verified_at": "2026-08-09",
+  "critical_paths": {
+    "/v3/templates": ["GET", "POST"],
+    "/v3/templates/{id}": ["DELETE", "GET", "PUT"],
+    "/v3/profiles": ["GET", "POST"],
+    "/v3/profiles/{profileId}": ["DELETE", "GET", "PATCH"],
+    "/v3/profiles/{profileId}/complete": ["POST"],
+    "/v3/profiles/{profileId}/campaigns": ["GET", "POST"],
+    "/v3/profiles/{profileId}/campaigns/{campaignId}": ["DELETE", "PUT"],
+    "/v3/messages": ["POST"],
+    "/v3/messages/{id}": ["GET"],
+    "/v3/messages/{id}/activities": ["GET"],
+    "/v3/webhooks": ["GET", "POST"],
+    "/v3/webhooks/event-types": ["GET"]
+  },
+  "retired_guidance_paths": [
+    "/v3/brands",
+    "/v3/brands/{brandId}/campaigns"
+  ],
+  "authentication": {
+    "required_header": "x-api-key",
+    "organization_scope_header": "x-profile-id",
+    "profile_key_scope_header_result": 403,
+    "legacy_headers": ["x-sender-id"]
+  },
+  "template_create": {
+    "required_fields": ["definition"],
+    "allowed_fields": [
+      "category",
+      "language",
+      "definition",
+      "creation_source",
+      "submit_for_review",
+      "sandbox"
+    ],
+    "unsupported_top_level_fields": ["name", "channels", "body", "header", "buttons", "components"],
+    "body_fields": ["multiChannel", "sms", "whatsapp", "rcs"],
+    "body_max_length": 1024,
+    "placeholder_example": "{{0:variable}}",
+    "variable_required_fields": ["id", "name", "type", "props"],
+    "variable_sample_field": "props.sample",
+    "button_types": ["QUICK_REPLY", "URL", "VOICE_CALL", "PHONE_NUMBER", "COPY_CODE"],
+    "button_limits": {
+      "total": 10,
+      "URL": 2,
+      "VOICE_CALL": 1,
+      "PHONE_NUMBER": 1,
+      "COPY_CODE": 1
+    },
+    "authentication_config_fields": ["addSecurityRecommendation", "codeExpirationMinutes"],
+    "resource_statuses": ["DRAFT", "PENDING", "APPROVED", "REJECTED", "PAUSED"]
+  },
+  "template_webhook": {
+    "field": "templates",
+    "forbidden_envelope_fields": ["sub_type", "event"],
+    "known_provider_statuses": ["PENDING", "APPROVED", "REJECTED", "CATEGORY_UPDATED", "PAUSED", "DISABLED"]
+  },
+  "profile": {
+    "create_required_fields": ["name"],
+    "sharing_fields": ["allow_contact_sharing", "allow_template_sharing"],
+    "inheritance_fields": ["inherit_contacts", "inherit_templates", "inherit_tcr_brand", "inherit_tcr_campaign"],
+    "billing_models": ["profile", "organization", "profile_and_organization"],
+    "number_fields": [
+      "sending_phone_number_profile_id",
+      "sending_whatsapp_number_profile_id",
+      "sending_phone_number",
+      "whatsapp_phone_number",
+      "allow_number_change_during_onboarding"
+    ],
+    "waba_required_fields": ["waba_id", "access_token"],
+    "waba_optional_fields": ["phone_number_id"],
+    "complete_required_fields": ["webHookUrl"],
+    "create_status_example": "incomplete",
+    "complete_200_status_example": "completed",
+    "completion_callback_events": ["COMPLETED", "SUBMITTED", "failed"]
+  },
+  "campaign": {
+    "request_wrapper": ["campaign", "sandbox"],
+    "required_fields": ["name", "description", "type", "useCases"],
+    "optional_fields": [
+      "volume",
+      "messageFlow",
+      "privacyPolicyLink",
+      "termsAndConditionsLink",
+      "optinMessage",
+      "optoutMessage",
+      "helpMessage",
+      "optinKeywords",
+      "optoutKeywords",
+      "helpKeywords"
+    ],
+    "use_case_fields": ["messagingUseCaseUs", "sampleMessages"],
+    "use_case_values": [
+      "MARKETING",
+      "ACCOUNT_NOTIFICATION",
+      "CUSTOMER_CARE",
+      "FRAUD_ALERT",
+      "TWO_FA",
+      "DELIVERY_NOTIFICATION",
+      "SECURITY_ALERT",
+      "M2M",
+      "MIXED",
+      "HIGHER_EDUCATION",
+      "POLLING_VOTING",
+      "PUBLIC_SERVICE_ANNOUNCEMENT",
+      "LOW_VOLUME"
+    ],
+    "sample_min": 1,
+    "sample_max": 5,
+    "sample_max_length": 1024,
+    "volume_type": "numeric-string",
+    "volume_tier_boundary": 2000,
+    "statuses": ["SENT_CREATED", "ACTIVE", "EXPIRED"],
+    "submission_field": "submittedToTCR"
+  },
+  "routing": {
+    "automatic": ["channel omitted", "sent"],
+    "pinned": ["sms", "whatsapp", "rcs"],
+    "multiple_explicit_channels": "broadcast",
+    "rcs_current_capabilities": ["text", "up to four suggestion chips"],
+    "rcs_roadmap_capabilities": ["rich cards", "carousels", "media attachments"]
+  }
+}

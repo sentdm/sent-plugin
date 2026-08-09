@@ -1,7 +1,7 @@
 ---
-description: Sent meta dispatcher — routes to the right SMS/WhatsApp/RCS skill on Sent
+description: Route a request through the Sent skill set
 ---
 
-Invoke the `sent` skill to triage which Sent workflow the user wants and route to the corresponding direct-operation or specialist skill.
+Invoke the `sent` skill with the user's request unchanged:
 
-Ask the clarifying questions in that skill before routing.
+$ARGUMENTS
