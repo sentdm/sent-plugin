@@ -48,13 +48,15 @@ Capture these dimensions before calculating anything: profile or sender identity
 
 ### 2. Build cohorts from Sent message IDs
 
-Use Sent `message_id` as the primary unit. A v3 send can create separate messages for each recipient and channel pair when multiple channels are specified. Count each Sent message once at its latest status, then add recipient-level or campaign-level rollups only after deduplication.
+Use Sent `message_id` as the primary unit. A v3 send can create separate messages for each recipient and channel pair when multiple channels are specified. Count each Sent message once in a terminal-outcome rollup, then add recipient-level or campaign-level rollups only after deduplication.
+
+Distinguish an activity history from a latest-status snapshot. A history can prove the transitions it contains. A snapshot such as `status=DELIVERED` proves only the observed current outcome; it does not prove that the export also observed `QUEUED`, `ROUTED`, or `SENT`. Report unavailable transition denominators as `N/A`, not zero, and never synthesize missing transitions.
 
 Do not use provider IDs such as WhatsApp `wamid`, SMS carrier IDs, or RCS message IDs as the primary join key unless the exported evidence lacks Sent IDs. Provider IDs are useful for escalation, but the Sent API and dashboard track status by Sent message ID.
 
 ### 3. Normalize lifecycle stages to Sent’s documented statuses
 
-Use Sent’s documented lifecycle as the first-pass funnel: `QUEUED`, `ROUTED`, `SENT`, `DELIVERED`, and `READ` for WhatsApp and RCS. Keep failed and error states in a separate terminal bucket using the exact status/error fields present in the evidence.
+Use Sent’s documented delivery lifecycle as the first-pass funnel: `QUEUED`, `ROUTED`, `SENT`, and `DELIVERED`. Treat `READ` as a separate engagement measure for WhatsApp and RCS, never as an SMS delivery requirement. Keep terminal failures, deferred/in-flight messages, inbound `RECEIVED` messages, and malformed/unknown records in separate buckets using only fields present in the evidence.
 
 | Stage | Interpretation | Common diagnostic question |
 |---|---|---|
@@ -62,7 +64,7 @@ Use Sent’s documented lifecycle as the first-pass funnel: `QUEUED`, `ROUTED`, 
 | `ROUTED` | Sent selected a channel/provider path. | Did routing choose the expected channel or fallback path? |
 | `SENT` | The message left Sent/provider processing toward the destination network. | Are provider accepts high but downstream delivery low? |
 | `DELIVERED` | Delivery was confirmed where supported. | Did the destination network confirm receipt? |
-| `READ` | WhatsApp/RCS read receipt was observed where available. | Did users open the message after delivery? |
+| `READ` | WhatsApp/RCS engagement receipt was observed where available. | Did users open the message after delivery? |
 | Error/failure | A terminal or recoverable error occurred. | Is the root cause compliance, payload, throughput, opt-out, or provider outage? |
 
 ### 4. Check webhook health before diagnosing delivery
@@ -83,7 +85,7 @@ SMS, WhatsApp, and RCS fail differently. Do not average them together unless the
 
 ### 6. Quantify impact before recommending fixes
 
-Report raw counts and rates together. A 40% failure rate over 15 messages is a different decision than a 4% failure rate over 150,000 messages. Include exclusions such as pending messages, test traffic, sandbox sends, retries, and duplicate channel fan-out.
+Report raw counts and rates together. A 40% failure rate over 15 messages is a different decision than a 4% failure rate over 150,000 messages. Reconcile the global totals with every channel × direction group, retaining explicit `unknown` groups instead of silently dropping incomplete dimensions. Include exclusions such as pending messages, test traffic, sandbox sends, retries, and duplicate channel fan-out.
 
 A practical analysis table should include: sent count, latest status distribution, failure count, failure-rate delta versus baseline, top exact error strings/codes, first observed timestamp, affected templates, affected countries, and affected profiles.
 
@@ -108,7 +110,10 @@ Do not mistake broadcast for fallback. Omitted `channel` or `["sent"]` enables a
 - [ ] The analysis uses Sent `message_id` values as the primary unit.
 - [ ] The cohort is pinned by time window, profile/sender identity, template, channel, and recipient segment.
 - [ ] Status math uses the latest known status per Sent message ID.
+- [ ] Transition math uses observed activity histories and never backfills stages from a latest-only status.
 - [ ] Pending or in-flight messages are either excluded or reported separately.
+- [ ] SMS delivery analysis stops at `DELIVERED`; WhatsApp/RCS `READ` is labeled engagement.
+- [ ] Global and channel × direction totals reconcile, including malformed and explicit `unknown` buckets.
 - [ ] Webhook configuration, event history, and endpoint test results are checked when the symptom is missing callbacks.
 - [ ] Channel-specific failures are split before aggregate rates are reported.
 - [ ] Provider or carrier codes are quoted exactly as observed and not invented from a lookup table.
@@ -132,7 +137,7 @@ Use the `sent` skill for shared Sent terminology and routing.
 |---|---|---|
 | `references/mdr-status-codes.md` | Lookup table | Normalize observed SMS, WhatsApp, and RCS provider errors without putting long code dictionaries in the skill body. |
 | `references/performance-diagnosis-playbook.md` | Worked examples | Decision tree for which signal to investigate first, channel-specific diagnostic patterns, cross-skill handoff matrix, and escalation criteria. |
-| `scripts/analyze_mdr_funnel.py` | Validation script | Reads an MDR export (CSV or JSON), prints per-stage counts and drop-off percentages, exits non-zero on anomalies. Run from the skill root: `python scripts/analyze_mdr_funnel.py path/to/mdr.csv` (use `--threshold N` to tune, default 20; pass `--show-errors` to also tally `ERR_*` codes parsed from FAILED message `description` fields). |
+| `scripts/analyze_mdr_funnel.py` | Validation script | Reads an MDR export (CSV or JSON), groups channel × direction outcomes, separates delivery transitions from engagement, and retains malformed/unknown rows. Run from the skill root: `python scripts/analyze_mdr_funnel.py path/to/mdr.csv` (use `--threshold N`, `--show-errors`, or `--format json`). Exit `0` means no observed transition breach, `2` means bad input/no usable cohort, and `3` means an observed breach. JSON uses `null` where a denominator is unavailable; text uses `N/A`. |
 | `scripts/fixtures/good.json` | Fixture | Synthetic healthy-funnel MDR export. |
 | `scripts/fixtures/bad.json` | Fixture | Synthetic MDR export with deliberate >50% SENT→DELIVERED drop. |
 

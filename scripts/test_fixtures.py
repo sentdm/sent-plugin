@@ -107,18 +107,99 @@ class DirectMDRTests(unittest.TestCase):
                 path.write_text(json.dumps(value), encoding="utf-8")
                 self.assertEqual(MDR._load_messages(path), records)
 
-    def test_rejects_malformed_json_wrong_root_and_invalid_records(self) -> None:
+    def test_rejects_malformed_json_and_wrong_root(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "messages.json"
-            for value in ("{", json.dumps({"unexpected": []}), json.dumps(["not-an-object"])):
+            for value in ("{", json.dumps({"unexpected": []})):
                 path.write_text(value, encoding="utf-8")
                 with self.subTest(value=value), self.assertRaises(MDR.InputError):
                     MDR._load_messages(path)
 
-    def test_threshold_is_strictly_greater_than_boundary(self) -> None:
-        counts = {"QUEUED": 5, "ROUTED": 5, "SENT": 5, "DELIVERED": 5, "READ": 4}
-        drops = MDR.stage_dropoffs(counts)
-        self.assertEqual(drops[-1], ("DELIVERED", "READ", 20.0))
+    def test_latest_only_record_never_infers_earlier_transitions(self) -> None:
+        normalized = MDR.normalize_record(
+            {"message_id": "msg_test_001", "channel": "whatsapp", "status": "DELIVERED"},
+            1,
+        )
+        self.assertEqual(normalized.observed_statuses, ("DELIVERED",))
+        self.assertFalse(normalized.has_history)
+        report = MDR.build_report([normalized], threshold=20.0, include_errors=False)
+        group = report["groups"][0]
+        self.assertEqual(group["progression"]["observed"], {"QUEUED": 0, "ROUTED": 0, "SENT": 0, "DELIVERED": 1})
+        self.assertTrue(all(item["dropoff_pct"] is None for item in group["progression"]["transitions"]))
+        self.assertIsNone(report["healthy"])
+
+    def test_groups_by_channel_and_direction_with_unknown_buckets(self) -> None:
+        records = [
+            {"channel": "sms", "direction": "outbound", "status": "DELIVERED"},
+            {"channel": "whatsapp", "direction": "inbound", "status": "RECEIVED"},
+            {"channel": "satellite", "status": "SENT"},
+        ]
+        report = MDR.analyze(records, threshold=20.0, include_errors=False)
+        keys = {(group["channel"], group["direction"]) for group in report["groups"]}
+        self.assertEqual(keys, {("sms", "outbound"), ("whatsapp", "inbound"), ("unknown", "unknown")})
+        self.assertEqual(report["totals"]["input"], 3)
+        self.assertEqual(sum(group["totals"]["input"] for group in report["groups"]), 3)
+        self.assertEqual(sum(report["totals"][name] for name in MDR.OUTCOMES), 3)
+
+    def test_full_history_drives_transition_rates_and_terminal_outcomes(self) -> None:
+        records = [
+            {
+                "channel": "whatsapp",
+                "direction": "outbound",
+                "statuses": [{"stage": stage} for stage in ("QUEUED", "ROUTED", "SENT", "DELIVERED", "READ")],
+            },
+            {
+                "channel": "whatsapp",
+                "direction": "outbound",
+                "statuses": [{"stage": stage} for stage in ("QUEUED", "ROUTED", "SENT", "FAILED")],
+            },
+            {
+                "channel": "whatsapp",
+                "direction": "outbound",
+                "statuses": [{"stage": stage} for stage in ("QUEUED", "ROUTED", "SENT")],
+            },
+        ]
+        report = MDR.analyze(records, threshold=20.0, include_errors=False)
+        group = report["groups"][0]
+        self.assertEqual(group["totals"]["progression"], 1)
+        self.assertEqual(group["totals"]["terminal_failure"], 1)
+        self.assertEqual(group["totals"]["deferred"], 1)
+        sent_to_delivered = next(
+            item for item in group["progression"]["transitions"] if item["from"] == "SENT"
+        )
+        self.assertEqual(sent_to_delivered["eligible"], 2)
+        self.assertEqual(sent_to_delivered["completed"], 1)
+        self.assertEqual(sent_to_delivered["dropoff_pct"], 50.0)
+        self.assertFalse(report["healthy"])
+
+    def test_sms_stops_at_delivery_and_read_is_channel_engagement(self) -> None:
+        records = [
+            {
+                "channel": "sms",
+                "direction": "outbound",
+                "statuses": [{"stage": stage} for stage in ("QUEUED", "ROUTED", "SENT", "DELIVERED")],
+            },
+            {
+                "channel": "whatsapp",
+                "direction": "outbound",
+                "statuses": [{"stage": stage} for stage in ("QUEUED", "ROUTED", "SENT", "DELIVERED", "READ")],
+            },
+        ]
+        report = MDR.analyze(records, threshold=20.0, include_errors=False)
+        groups = {(group["channel"], group["direction"]): group for group in report["groups"]}
+        self.assertIsNone(groups[("sms", "outbound")]["engagement"])
+        self.assertEqual(groups[("sms", "outbound")]["progression"]["observed"]["DELIVERED"], 1)
+        self.assertEqual(groups[("whatsapp", "outbound")]["engagement"]["read_rate_pct"], 100.0)
+
+    def test_zero_denominators_render_as_na_and_json_null(self) -> None:
+        report = MDR.analyze(
+            [{"channel": "rcs", "direction": "outbound", "status": "DELIVERED"}],
+            threshold=20.0,
+            include_errors=False,
+        )
+        rendered = MDR.render_text(report)
+        self.assertIn("N/A", rendered)
+        self.assertIn('"dropoff_pct": null', json.dumps(report))
 
     def test_error_summary_only_counts_failed_records(self) -> None:
         records = [
@@ -130,6 +211,18 @@ class DirectMDRTests(unittest.TestCase):
             MDR.summarise_errors(records),
             {"ERR_ROUTE_DENIED": 1, "ERR_CONSENT_BLOCKED": 1},
         )
+
+    def test_malformed_and_unknown_records_are_retained_in_totals(self) -> None:
+        report = MDR.analyze(
+            ["not-an-object", {"channel": "sms", "direction": "outbound", "status": "MYSTERY"}],
+            threshold=20.0,
+            include_errors=True,
+        )
+        self.assertEqual(report["totals"]["malformed"], 1)
+        self.assertEqual(report["totals"]["unknown"], 1)
+        self.assertEqual(report["totals"]["usable"], 0)
+        self.assertIsNone(report["healthy"])
+        self.assertEqual(len(report["diagnostics"]), 2)
 
 
 class DirectEvidencePacketTests(unittest.TestCase):
@@ -326,13 +419,37 @@ class PublicCliBehaviorTests(unittest.TestCase):
             invalid.write_text('["not-an-object"]', encoding="utf-8")
             result = self.run_cli(MDR_ROOT / "analyze_mdr_funnel.py", invalid)
             self.assertEqual(result.returncode, 2)
-            self.assertIn("record 1 must be an object", result.stderr)
+            self.assertIn("no usable analysis cohort", result.stderr)
             self.assertNotIn("Traceback", result.stderr)
 
     def test_mdr_exact_threshold_is_healthy(self) -> None:
         records = [
-            *({"message_id": f"msg_test_{index}", "statuses": [{"stage": "READ"}]} for index in range(4)),
-            {"message_id": "msg_test_5", "statuses": [{"stage": "DELIVERED"}]},
+            *(
+                {
+                    "message_id": f"msg_test_{index}",
+                    "channel": "whatsapp",
+                    "direction": "outbound",
+                    "statuses": [
+                        {"stage": "QUEUED"},
+                        {"stage": "ROUTED"},
+                        {"stage": "SENT"},
+                        {"stage": "DELIVERED"},
+                        {"stage": "READ"},
+                    ],
+                }
+                for index in range(4)
+            ),
+            {
+                "message_id": "msg_test_5",
+                "channel": "whatsapp",
+                "direction": "outbound",
+                "statuses": [
+                    {"stage": "QUEUED"},
+                    {"stage": "ROUTED"},
+                    {"stage": "SENT"},
+                    {"stage": "DELIVERED"},
+                ],
+            },
         ]
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "boundary.json"
@@ -340,6 +457,36 @@ class PublicCliBehaviorTests(unittest.TestCase):
             result = self.run_cli(MDR_ROOT / "analyze_mdr_funnel.py", path, "--threshold", 20)
         self.assertEqual(result.returncode, 0, (result.stdout, result.stderr))
         self.assertIn("DELIVERED -> READ: 20.0%", result.stdout)
+
+    def test_mdr_json_output_is_machine_readable_and_all_unknown_is_not_healthy(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "unknown.json"
+            path.write_text(json.dumps([{"channel": "unknown", "status": "MYSTERY"}]), encoding="utf-8")
+            result = self.run_cli(MDR_ROOT / "analyze_mdr_funnel.py", path, "--format", "json")
+        self.assertEqual(result.returncode, 2, (result.stdout, result.stderr))
+        report = json.loads(result.stdout)
+        self.assertIsNone(report["healthy"])
+        self.assertEqual(report["totals"]["usable"], 0)
+        self.assertEqual(result.stderr.strip(), "")
+
+    def test_mdr_json_show_errors_has_stable_error_counts(self) -> None:
+        records = [
+            {
+                "channel": "sms",
+                "direction": "outbound",
+                "statuses": [{"stage": "QUEUED"}, {"stage": "FAILED"}],
+                "description": "ERR_ROUTE_DENIED",
+            }
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "failed.json"
+            path.write_text(json.dumps(records), encoding="utf-8")
+            result = self.run_cli(
+                MDR_ROOT / "analyze_mdr_funnel.py", path, "--format", "json", "--show-errors"
+            )
+        self.assertEqual(result.returncode, 3, (result.stdout, result.stderr))
+        report = json.loads(result.stdout)
+        self.assertEqual(report["error_codes"], {"ERR_ROUTE_DENIED": 1})
 
 
 class FixturePrivacyTests(unittest.TestCase):
