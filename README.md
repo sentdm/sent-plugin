@@ -1,6 +1,6 @@
 # Sent Agent Skills for SMS, WhatsApp, RCS, and MCP
 
-The official Sent agent plugin combines thirteen [Agent Skills](https://agentskills.io/) with nineteen live [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) tools. Use it to send and track business messages, manage contacts and templates, query analytics and account readiness, diagnose delivery failures, and guide SMS 10DLC, WhatsApp Business, RCS/RBM, and Sender Profile implementations.
+The official Sent agent plugin combines focused [Agent Skills](https://agentskills.io/) with live [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) tools. Use it to send and track business messages, manage contacts and templates, query analytics and account readiness, diagnose delivery failures, and guide SMS 10DLC, WhatsApp Business, RCS/RBM, and Sender Profile implementations.
 
 This repository is both:
 
@@ -33,7 +33,7 @@ npx skills add https://github.com/sentdm/sent-plugin \
   --skill messaging-performance-analyzer
 ```
 
-Install all thirteen skills:
+Install all skills:
 
 ```bash
 npx skills add https://github.com/sentdm/sent-plugin --skill '*'

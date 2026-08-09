@@ -1,6 +1,6 @@
 # Sent Agent Plugin
 
-Sent `0.1.0` is the canonical portable [Agent Plugins 1.0.0](https://agent-plugins.org/) package for the official Sent skills collection. It combines thirteen Agent Skills with nineteen remote MCP operations for SMS, WhatsApp, RCS, contacts, templates, analytics, account readiness, delivery diagnosis, compliance, and onboarding.
+This is the canonical portable [Agent Plugins 1.0.0](https://agent-plugins.org/) package for the official Sent skills collection and remote MCP operations for SMS, WhatsApp, RCS, contacts, templates, analytics, account readiness, delivery diagnosis, compliance, and onboarding.
 
 Skills remain usable for planning and implementation guidance when a host does not support MCP or when authorization is unavailable. Live account reads and mutations require a compatible client connected to the Sent MCP server.
 

@@ -12,7 +12,7 @@
     {
       "name": "sent",
       "source": "./claude-plugins/sent",
-      "description": "Official Sent business messaging plugin with 13 agent skills and 19 MCP tools for SMS, WhatsApp, RCS, contacts, templates, analytics, account readiness, delivery diagnosis, 10DLC, WABA, RBM, and Sender Profile workflows.",
+      "description": "Official Sent business messaging plugin for safe SMS, WhatsApp, RCS, contacts, templates, analytics, account readiness, delivery diagnosis, 10DLC, WABA, RBM, and Sender Profile workflows.",
       "category": "Productivity"
     }
   ]

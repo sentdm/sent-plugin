@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "tools": {
+    "account.get": {
+      "owner": "sent-account-readiness",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "balance.get": {
+      "owner": "sent-account-readiness",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "contacts.create_many": {
+      "owner": "sent-contacts",
+      "mutation": "state_changing",
+      "confirmation_required": true
+    },
+    "contacts.delete": {
+      "owner": "sent-contacts",
+      "mutation": "destructive",
+      "confirmation_required": true
+    },
+    "contacts.get": {
+      "owner": "sent-contacts",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "contacts.list": {
+      "owner": "sent-contacts",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "contacts.message_summary": {
+      "owner": "sent-contacts",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "dashboard.contacts": {
+      "owner": "sent-analytics",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "dashboard.deliverability": {
+      "owner": "sent-analytics",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "dashboard.messages_sent": {
+      "owner": "sent-analytics",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "messages.activities.list": {
+      "owner": "sent-messaging",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "messages.get": {
+      "owner": "sent-messaging",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "messages.send": {
+      "owner": "sent-messaging",
+      "mutation": "destructive",
+      "confirmation_required": true
+    },
+    "numbers.lookup": {
+      "owner": "sent-analytics",
+      "mutation": "state_changing",
+      "confirmation_required": false
+    },
+    "onboarding.status": {
+      "owner": "sent-account-readiness",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "templates.delete": {
+      "owner": "sent-templates",
+      "mutation": "destructive",
+      "confirmation_required": true
+    },
+    "templates.get": {
+      "owner": "sent-templates",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "templates.get_by_name": {
+      "owner": "sent-templates",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "templates.list": {
+      "owner": "sent-templates",
+      "mutation": "read_only",
+      "confirmation_required": false
+    }
+  }
+}

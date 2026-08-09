@@ -106,6 +106,31 @@ def wrong_openai_test_count(root: Path) -> None:
     path.write_text(json.dumps(submission, indent=2) + "\n", encoding="utf-8")
 
 
+def unexpected_public_tool(root: Path) -> None:
+    path = root / "packages" / "sent" / "public-surface.json"
+    surface = json.loads(path.read_text(encoding="utf-8"))
+    surface["tools"]["messages.teleport"] = {
+        "owner": "sent-messaging",
+        "mutation": "destructive",
+        "confirmation_required": True,
+    }
+    path.write_text(json.dumps(surface, indent=2) + "\n", encoding="utf-8")
+
+
+def invalid_tool_owner(root: Path) -> None:
+    path = root / "packages" / "sent" / "public-surface.json"
+    surface = json.loads(path.read_text(encoding="utf-8"))
+    surface["tools"]["messages.send"]["owner"] = "missing-skill"
+    path.write_text(json.dumps(surface, indent=2) + "\n", encoding="utf-8")
+
+
+def mutation_annotation_drift(root: Path) -> None:
+    path = root / "chatgpt-app-submission.json"
+    submission = json.loads(path.read_text(encoding="utf-8"))
+    submission["tools"]["messages.send"]["annotations"]["destructiveHint"] = False
+    path.write_text(json.dumps(submission, indent=2) + "\n", encoding="utf-8")
+
+
 def retired_brand_endpoint(root: Path) -> None:
     path = root / "packages" / "sent" / "skills" / "sms-10dlc-registration" / "SKILL.md"
     with path.open("a", encoding="utf-8") as handle:
@@ -151,6 +176,9 @@ CASES: tuple[tuple[str, Mutation, str], ...] = (
     ("README skill catalog coverage", missing_readme_catalog_entry, "skill catalog does not link"),
     ("skill discovery descriptions", weak_skill_discovery_description, "discovery description must explain"),
     ("OpenAI test counts", wrong_openai_test_count, "exactly three negative test cases"),
+    ("unexpected MCP tool", unexpected_public_tool, "OpenAI submission tool set mismatch"),
+    ("invalid MCP tool owner", invalid_tool_owner, "is not a canonical skill"),
+    ("mutation annotation consistency", mutation_annotation_drift, "public mutation class destructive"),
     ("retired brand endpoint", retired_brand_endpoint, "retired endpoint"),
     ("template webhook envelope", template_sub_type, "template webhook example uses sub_type"),
     ("ordered channel fallback", ordered_channel_fallback, "explicit RCS/SMS array"),
