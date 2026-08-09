@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-"""Validate the exact Sent campaign request used by profile campaign endpoints."""
+"""Validate the exact Sent campaign request used by profile campaign endpoints.
+
+Exit codes:
+    0 - valid campaign payload
+    1 - invalid payload or unreadable/malformed input
+"""
 
 from __future__ import annotations
 
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -115,18 +121,21 @@ def validate(payload: Any, path: str = "<payload>") -> list[str]:
     return issues
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("payload", type=Path)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         payload = json.loads(args.payload.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        print(f"{args.payload}: {exc}")
-        return 2
+    except OSError as exc:
+        print(f"{args.payload}: <file>: {exc}", file=sys.stderr)
+        return 1
+    except json.JSONDecodeError as exc:
+        print(f"{args.payload}: <file>: invalid JSON ({exc})", file=sys.stderr)
+        return 1
     issues = validate(payload, str(args.payload))
     if issues:
-        print("\n".join(issues))
+        print("\n".join(issues), file=sys.stderr)
         return 1
     print("OK")
     return 0
