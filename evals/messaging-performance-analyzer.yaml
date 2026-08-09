@@ -9,6 +9,12 @@ cases:
   - query: "Help me read this MDR — I'm seeing a spike in Meta error 131047"
     expect: trigger
     rationale: Explicit MDR keyword + WhatsApp-specific status-code spike. Exactly the per-channel status-code triage path.
+  - query: "This export only has each message's latest status. Can you compare SMS delivery with WhatsApp reads without inventing stages?"
+    expect: trigger
+    rationale: Explicitly requests channel-aware outcome analysis and the latest-only evidence rule handled by the MDR analyzer.
+  - query: "My MDR has inbound, outbound, unknown-channel, and malformed rows. Reconcile every row and show me the usable cohorts."
+    expect: trigger
+    rationale: Requests the analyzer's direction grouping, unknown buckets, diagnostics, and reconciliation behavior.
   - query: "Compare AWS SNS vs Twilio pricing for transactional SMS"
     expect: no_trigger
     rationale: Vendor/pricing comparison, not delivery-funnel analysis on Sent. No MDR, no funnel, no Sent-tenant context.

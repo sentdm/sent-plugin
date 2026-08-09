@@ -129,9 +129,11 @@ When escalating, include: account / profile ID, channel, cohort definition (temp
 Repeat until the symptom is explained or scoped:
 
 1. Pin the cohort (channel × template × country × profile × window).
-2. Compute the funnel; identify the broken lifecycle stage (`QUEUED`/`ROUTED`/`SENT`/`DELIVERED`/`READ`).
-3. If the gate is between `QUEUED` and `SENT`: check synchronous codes on recent request envelopes.
-4. If the gate is at `FAILED` after `SENT`: fetch a sample of failed message IDs, read `description` for `ERR_*` codes.
-5. If the symptom is missing customer-side data: prove webhook health via `is_active`, `consecutive_failures`, and `/v3/webhooks/{id}/events` before blaming delivery.
-6. Hand off via the matrix above, or escalate to Sent support with the required evidence.
-7. Quantify the diagnosis — never "looks better now" without a recomputed funnel.
+2. Split channel × direction groups, reconcile them to the input total, and separate progression, terminal failure, deferred, inbound, and malformed/unknown outcomes.
+3. Compute delivery transitions only from explicit activity histories (`QUEUED`/`ROUTED`/`SENT`/`DELIVERED`). If the export contains latest-only rows, report their outcomes without inventing prior transitions.
+4. For WhatsApp/RCS, report `READ` separately as engagement. Stop SMS delivery analysis at `DELIVERED`.
+5. If the gate is between `QUEUED` and `SENT`: check synchronous codes on recent request envelopes.
+6. If the gate is at `FAILED` after `SENT`: fetch a sample of failed message IDs, read `description` for `ERR_*` codes.
+7. If the symptom is missing customer-side data: prove webhook health via `is_active`, `consecutive_failures`, and `/v3/webhooks/{id}/events` before blaming delivery.
+8. Hand off via the matrix above, or escalate to Sent support with the required evidence.
+9. Quantify the diagnosis — never "looks better now" without a recomputed funnel.

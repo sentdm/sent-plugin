@@ -9,7 +9,7 @@ Authoritative upstream sources (for the downstream provider codes that may appea
 
 ## Message status lifecycle
 
-Sent normalizes all channels into a single state machine. Only one terminal at a time; only the **latest** status per `message_id` is meaningful when computing funnel counts.
+Sent normalizes channels into a shared delivery state machine. The latest status per `message_id` determines its current outcome, while an activity history supplies the evidence for transition counts. Do not backfill earlier stages from a latest-only record.
 
 ```
 QUEUED -> ROUTED -> SENT -> DELIVERED -> READ   (WhatsApp & RCS only)
@@ -27,7 +27,7 @@ FAILED   FAILED   FAILED    FAILED
 | `FAILED` | Terminal failure; the per-message reason is in the `description` field. |
 | `RECEIVED` | Inbound message from end user. |
 
-A message can transition `SENT -> DELIVERED -> FAILED` (e.g. expired WhatsApp window, capability lost on RCS); count the latest status, not the journey.
+A message can transition `SENT -> DELIVERED -> FAILED`; classify its terminal outcome from the final observed event while retaining the actual journey for transition analysis. `READ` is WhatsApp/RCS engagement, not an SMS delivery stage.
 
 ## Synchronous errors (HTTP response body)
 
@@ -207,7 +207,10 @@ Carriers don't share an enum; the categories you actually need to triage on:
 ## Counting rules
 
 - **Use Sent `message_id`** as the primary unit. Provider IDs (carrier message IDs, `wamid`, RBM `messageId`) are useful for escalation but are **not** in the v3 docs as join keys.
-- **Use the latest status** (`max(timestamp)`) — a `FAILED` after `DELIVERED` means `FAILED`; a `READ` after `DELIVERED` means `READ`.
-- **Exclude pending** (`QUEUED`/`ROUTED`/`SENT` with no terminal status after the analysis window closes) from rate denominators — they're indeterminate.
+- **Use the latest observed event for the outcome** — a `FAILED` after `DELIVERED` is a terminal failure; a `READ` after `DELIVERED` is a delivered message with observed engagement.
+- **Use only explicit history for transitions.** A latest-only `DELIVERED` record does not prove the export observed `QUEUED`, `ROUTED`, or `SENT`; render those transition denominators as unavailable.
+- **Separate pending/deferred records** (`QUEUED`/`ROUTED`/`SENT` with no terminal status after the analysis window closes) from terminal rate denominators.
+- **Group by channel and direction.** Keep missing or unsupported dimensions in `unknown` buckets so totals reconcile instead of silently excluding them.
+- **Stop SMS at `DELIVERED`.** Calculate `READ` engagement only for WhatsApp and RCS.
 - **Separate channel fan-out.** `POST /v3/messages` with `"channel": ["sms","whatsapp","rcs"]` creates one message per channel; each has its own `message_id` and its own lifecycle. Don't double-count at the recipient level unless the user explicitly asks for recipient-level rollup.
 - **Honor a minimum cohort size** before drawing conclusions about small rate shifts. A working heuristic is ≥1,000 messages per cohort; below that, noise dominates. This is an analyst rule of thumb, not a Sent API rule.
