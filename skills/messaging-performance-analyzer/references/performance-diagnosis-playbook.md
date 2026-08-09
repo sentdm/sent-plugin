@@ -85,9 +85,11 @@ If `DELIVERED` is healthy and `READ` is low across all cohorts, the cause is alm
 
 ### Symptom: RCS funnel "looks broken"
 
-RCS is two funnels stitched together. Capability check happens before delivery; most "RCS broken" reports are actually "the audience isn't RCS-capable."
+RCS routing and delivery are separate stages. Capability selection happens before delivery; many "RCS broken" reports are audiences that were not routed to RCS.
 
-- If the Sender Profile uses fallback (`"channel": ["rcs", "sms"]`), the SMS fallback leg has its own `message_id` and its own lifecycle. Count separately. Never roll fallback SMS into RCS delivery.
+- Omitted `channel` or `["sent"]` enables automatic routing. Inspect the returned message record and `payload.channel` to see what Sent selected.
+- `["rcs"]` pins the send to RCS and is the cleanest cohort for isolating an RCS launch or payload problem.
+- Multiple explicit channels are broadcast and create separate message IDs. Count them separately and never call one leg fallback.
 - Per-carrier RCS approval is real — an agent can be launched on one carrier and not on another. Symptoms scoped to one carrier point at agent state; hand off to `rcs-agent-onboarding`.
 
 ## Cross-skill handoff matrix

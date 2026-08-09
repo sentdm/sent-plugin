@@ -44,7 +44,7 @@ Restate the user’s exact question as a measurable comparison. “WhatsApp is b
 
 Capture these dimensions before calculating anything: profile or sender identity, template ID/name, channel, country, send window, recipient segment, and whether fallback or multi-channel broadcast was requested.
 
-**Example.** If a user says “RCS fallback stopped working,” define the cohort as messages sent with `channel: ["rcs", "sms"]` during the affected window, then compare RCS statuses, SMS fallback statuses, and duplicate recipient/channel pairs separately.
+**Example.** If a user says “RCS fallback stopped working,” define the cohort as sends that omitted `channel` or used `channel: ["sent"]`, then compare the selected `payload.channel` and message activities. Analyze any explicit multi-channel arrays separately as broadcasts.
 
 ### 2. Build cohorts from Sent message IDs
 
@@ -79,7 +79,7 @@ SMS, WhatsApp, and RCS fail differently. Do not average them together unless the
 |---|---|---|
 | SMS | Country, sender/profile, 10DLC campaign, opt-out, carrier family | Compliance status, brand/campaign readiness, opt-out logs, throughput patterns. |
 | WhatsApp | Template, language, category, recipient country, quality/tier symptoms | Template status, read receipts, conversation window, Meta-side errors if present. |
-| RCS | Agent readiness, fallback behavior, capability gaps, rich content rendering | Sent RCS setup status, fallback SMS results, capability/error details if present. |
+| RCS | Agent readiness, automatic routing, pinned-channel failures, text/suggestion-chip rendering | Sent RCS setup status, selected route, and exact activity/error details. |
 
 ### 6. Quantify impact before recommending fixes
 
@@ -101,7 +101,7 @@ Do not label a campaign “carrier filtered” from a small sample without compa
 
 Do not treat `READ` as a universal stage. Sent documents read receipts for WhatsApp and RCS; SMS generally does not support read receipts.
 
-Do not collapse RCS fallback into SMS delivery. For `channel: ["rcs", "sms"]`, count RCS attempts and SMS attempts separately, then report recipient-level success if the user asks for it.
+Do not mistake broadcast for fallback. Omitted `channel` or `["sent"]` enables automatic routing; one explicit channel pins delivery; multiple explicit values create separate messages. Count every returned `message_id` once and report the selected channel.
 
 ## Verification checklist
 

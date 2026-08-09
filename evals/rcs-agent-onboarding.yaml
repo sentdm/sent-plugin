@@ -6,12 +6,15 @@ cases:
   - query: "Walk me through onboarding a new tenant for RCS Business Messaging on Sent."
     expect: trigger
     rationale: Tenant onboarding for RCS with Sent context. Matches "onboarding a tenant for RCS" trigger.
-  - query: "Should I declare rich cards and carousels as agent capabilities, or keep it minimal?"
+  - query: "Can I launch rich cards and carousels through Sent today?"
     expect: trigger
-    rationale: Capability-declaration decision specific to RBM agent setup — covered explicitly in this skill.
+    rationale: Current-capability question for Sent RCS; the skill must explain that text and up to four suggestion chips are current while richer formats are roadmap.
   - query: "Help me set up an OAuth agent in Rails."
     expect: no_trigger
     rationale: '"Agent" here means an OAuth client/service-account abstraction in a Rails app, not an RBM agent. No RCS, no RBM, no carrier context.'
-  - query: "Our RCS messages are dropping — most recipients fall back to SMS. What's wrong?"
+  - query: "Our automatically routed messages rarely select RCS. What's wrong?"
     expect: ambiguous
-    rationale: Could be capability mismatch (rcs-agent-onboarding — agent not launched in that carrier, capability check) OR a delivery-funnel analysis (messaging-performance-analyzer). Prefer messaging-performance-analyzer first to localize the broken stage; route here if the diagnosis points to agent launch state.
+    rationale: Could be capability or approval mismatch, or a live delivery/routing analysis. Prefer messaging-performance-analyzer first, then route here if evidence points to launch state.
+  - query: "Use an explicit RCS and SMS channel array as an ordered fallback for this send."
+    expect: trigger
+    rationale: Hard routing-safety case; the skill must reject ordered-fallback semantics and explain automatic routing versus broadcast.

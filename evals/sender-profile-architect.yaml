@@ -6,9 +6,12 @@ cases:
   - query: "How do I route an inbound WhatsApp webhook to the right tenant in my multi-tenant app?"
     expect: trigger
     rationale: Webhook fan-out + tenant scoping — verbatim "Use when" trigger in the description.
-  - query: "What's the right way to scope rate limits per Sender Profile across SMS, WhatsApp, and RCS?"
+  - query: "How do profile API keys and organization keys with x-profile-id change rate-limit and credential blast radius?"
     expect: trigger
-    rationale: Per-channel rate-limit accounting tied to the Sender Profile abstraction — core scope of this skill.
+    rationale: Direct authentication, organization-pool rate-limit, and blast-radius architecture question.
+  - query: "Can I use x-profile-id with a profile-specific API key?"
+    expect: trigger
+    rationale: Hard authentication negative; only organization keys may use x-profile-id and profile keys receive 403.
   - query: "Help me design a database schema for a CRM."
     expect: no_trigger
     rationale: Generic schema-design question with no Sent / messaging / multi-tenant-sender context. Belongs to a general data-modeling lifecycle skill, not this domain skill.

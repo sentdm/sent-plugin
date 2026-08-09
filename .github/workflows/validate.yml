@@ -1,9 +1,14 @@
 name: Validate plugin
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches: [main]
+  release:
+    types: [published]
+  schedule:
+    - cron: "17 9 * * 1"
 
 permissions:
   contents: read
@@ -51,3 +56,35 @@ jobs:
 
       - name: Test utility fixture contracts
         run: python scripts/test_fixtures.py
+
+      - name: Test Sent API contract regressions
+        run: python scripts/test_contracts.py
+
+  live-contract-and-routing:
+    if: github.event_name == 'schedule' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      SENT_ROUTING_EVAL_MODEL: ${{ vars.SENT_ROUTING_EVAL_MODEL || 'gpt-5-mini' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install validators
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Compare live Sent OpenAPI with manifest
+        run: python scripts/check_live_contract.py
+
+      - name: Run model-backed routing evaluation
+        if: env.OPENAI_API_KEY != ''
+        run: python scripts/run_model_routing_eval.py
+
+      - name: Explain skipped model evaluation
+        if: env.OPENAI_API_KEY == ''
+        run: echo "OPENAI_API_KEY is not configured; live contract drift still ran, but model routing evaluation was skipped."

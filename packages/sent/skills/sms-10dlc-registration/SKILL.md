@@ -1,165 +1,108 @@
 ---
 name: sms-10dlc-registration
-description: Prepares Sent US A2P SMS 10DLC compliance by collecting business, opt-in, brand, campaign, sample-message, and profile-completion evidence. Use when a user says 10DLC, A2P, TCR, campaign registry, brand vetting, SMS compliance, US texting, long code registration, opt-in proof, opt-out language, carrier filtering, or needs to register SMS through Sent.
+description: Prepares and validates Sent US A2P 10DLC brand and campaign registration through Sender Profiles, including inheritance, all campaign use cases, opt-in evidence, sample-message policy, autoresponses, sandbox validation, TCR status, and rejection remediation.
 ---
 
-<!--
-Verified against Sent sources:
-- https://docs.sent.dm/troubleshooting/compliance
-- https://docs.sent.dm/start/quickstart/channel-setup
-- https://docs.sent.dm/start/quickstart/dashboard-walkthrough
-- Sent v3 OpenAPI: /v3/brands, /v3/brands/{brandId}, /v3/brands/{brandId}/campaigns, /v3/brands/{brandId}/campaigns/{campaignId}, /v3/profiles/{profileId}/complete
+# SMS 10DLC Registration
 
-Review notes:
-- Sent docs verify that US SMS A2P messaging requires 10DLC registration and that Sent handles TCR registration as part of the compliance process.
-- Sent docs list required compliance-form inputs: legal business name, business address, EIN/tax ID, live website, privacy policy, opt-in mechanism URL, use-case description, sample messages, and opt-out instructions.
-- Treat exact carrier throughput, vetting-score impact, and TCR taxonomy details as external/compliance reference material unless Sent compliance data confirms them for the account.
--->
+Use this skill for US A2P SMS over 10-digit long codes. Separate the compliance evidence packet from the exact Sent API request; they have different schemas and validators.
 
-# SMS 10DLC registration
+## Current Sent resource model
 
-## Overview
+There is no standalone brand CRUD path in the current v3 API.
 
-Use this skill to prepare US A2P SMS compliance for Sent. Sent’s compliance documentation states that compliance is a prerequisite for sending messages and that 10DLC registration is mandatory for A2P messaging to US numbers. Sent handles TCR registration as part of the compliance process, while the customer must provide accurate business identity, consent, use-case, sample-message, and opt-out evidence.
+- Create a dedicated brand inside `POST /v3/profiles` using `brand` and `inherit_tcr_brand: false`.
+- List/create campaigns with `GET|POST /v3/profiles/{profileId}/campaigns`.
+- Update/delete with `PUT|DELETE /v3/profiles/{profileId}/campaigns/{campaignId}`.
 
-The Sent v3 API exposes Sent-facing brand and campaign resources through `/v3/brands` and `/v3/brands/{brandId}/campaigns`. Profile completion through `/v3/profiles/{profileId}/complete` validates profile, brand, and campaign prerequisites before the profile is ready.
+Reject guidance that reintroduces a free-standing brand path.
 
-## When to use
+## Choose inheritance deliberately
 
-Use this skill when the request mentions 10DLC, A2P, TCR, brand registration, campaign registration, SMS compliance, US long code, EIN, opt-in proof, sample messages, opt-out, HELP/STOP language, vetting, rejected campaign, or carrier filtering caused by compliance. Use it before enabling US SMS sending or SMS fallback for RCS.
+| Brand | Campaign | Settings |
+| --- | --- | --- |
+| Inherit both | Organization brand and campaign | `inherit_tcr_brand: true`, `inherit_tcr_campaign: true` |
+| Inherit brand, own campaign | Shared legal brand with tenant-specific traffic | brand true, campaign false |
+| Own both | Dedicated tenant/business | both false and supply `brand` during profile creation |
 
-Do not use this skill for non-US country compliance unless the user supplies a Sent compliance source for that country. Do not use it to analyze live delivery failures except to identify whether compliance status is the likely next check.
+Inherited campaigns are read-only. A profile cannot supply `brand` while brand inheritance is true.
 
-## Required evidence
+## Two validation layers
 
-Collect evidence before creating or updating Sent brand/campaign resources. Bad evidence creates review loops and downstream filtering risk.
+### Evidence readiness packet
 
-| Evidence | What to capture | Sent-grounded reason |
-|---|---|---|
-| Legal business identity | Legal business name, address, EIN/tax ID, entity type | Sent’s compliance guide lists these as required inputs. |
-| Public web presence | Live website URL and privacy policy URL | Sent requires a live website and privacy policy for compliance review. |
-| Opt-in mechanism | URL, screenshot, form text, checkbox language, or checkout flow | Sent requires an opt-in mechanism URL. |
-| Use-case description | Clear description of what messages are sent and why | Sent requires use-case description. |
-| Sample messages | Realistic messages matching the declared use case | Sent requires sample messages. |
-| Opt-out instructions | STOP/HELP or equivalent instructions where applicable | Sent requires opt-out instructions. |
-| Sender Profile | Sent profile ID or dashboard profile being completed | Profile completion validates compliance prerequisites. |
+The private packet uses the explicit internal version `sent-10dlc-evidence/v1` and snake_case evidence fields. It is not an API payload.
 
-## Process
+```bash
+python scripts/validate_10dlc_packet.py evidence.json
+```
 
-### 1. Decide whether this is US A2P SMS
+Collect legal identity, public website/policy links, consent proof, message flow, opt-in/opt-out/help responses and keywords, use cases, and realistic samples. See [references/10dlc-evidence-checklist.md](references/10dlc-evidence-checklist.md).
 
-Confirm destination country, traffic type, and sender type. This skill applies to US A2P SMS over 10DLC. If the user is sending only WhatsApp, RCS without SMS fallback, short code, toll-free, or non-US traffic, document the difference and route to the appropriate compliance workflow.
+### Sent campaign request
 
-**Example.** “We send appointment reminders from a SaaS platform to US patients using local long-code numbers” is US A2P SMS and needs 10DLC. “We send only WhatsApp utility templates” is not a 10DLC workflow, though WhatsApp has its own template and business requirements.
+The API request uses exact camelCase and a `campaign` wrapper:
 
-### 2. Normalize the business identity
+<!-- sent-campaign-request -->
+```json
+{
+  "campaign": {
+    "name": "Acme account notifications",
+    "description": "Account and delivery notifications for opted-in customers.",
+    "type": "App",
+    "useCases": [
+      {
+        "messagingUseCaseUs": "ACCOUNT_NOTIFICATION",
+        "sampleMessages": [
+          "Acme Example: Your account preference was updated. Reply STOP to opt out."
+        ]
+      }
+    ],
+    "volume": "2000",
+    "messageFlow": "Customers opt in in account settings before notifications begin.",
+    "privacyPolicyLink": "https://example.com/privacy",
+    "termsAndConditionsLink": "https://example.com/terms",
+    "optinMessage": "Acme Example: You are subscribed. Reply STOP to opt out.",
+    "optoutMessage": "Acme Example: You are unsubscribed and will receive no more messages.",
+    "helpMessage": "Acme Example: Visit https://example.com/support for help.",
+    "optinKeywords": "START,YES",
+    "optoutKeywords": "STOP,UNSUBSCRIBE",
+    "helpKeywords": "HELP,INFO"
+  },
+  "sandbox": true
+}
+```
 
-Use the exact legal business name and tax ID records. Do not “clean up” the name to a marketing brand if the tax record uses another legal entity. Mismatches between legal identity, website, and opt-in flow are common rejection causes.
+Validate it with:
 
-If the customer is an ISV registering many customers, decide whether each customer needs its own profile/brand/campaign boundary with `sender-profile-architect`. Do not put unrelated customers under one brand because it is faster.
+```bash
+python scripts/validate_campaign_payload.py campaign.json
+```
 
-### 3. Classify the campaign by use case
+## API use cases
 
-Pick the narrowest truthful campaign use case. Mixed-use campaigns can be valid, but they invite broader review and more filtering risk if the sample messages do not match the declared intent.
+Support all 13 current values:
 
-| Declared intent | Better sample | Bad sample |
-|---|---|---|
-| Account notification | “Acme: Your password was changed. If this was not you, visit https://acme.example/security. Reply STOP to opt out.” | “Huge sale today. Click now.” |
-| Delivery notification | “Acme: Order 1234 is out for delivery today. Track: https://acme.example/t/1234. Reply STOP to opt out.” | “Your package is coming. Also buy these add-ons.” |
-| Customer care | “Acme Support: We received your request and will respond shortly. Reply STOP to opt out.” | “Thanks for contacting us. Get 20% off now.” |
-| Marketing | “Acme: Spring sale starts today. Use code SPRING. Reply STOP to opt out.” | Transactional description with promotional samples. |
+`MARKETING`, `ACCOUNT_NOTIFICATION`, `CUSTOMER_CARE`, `FRAUD_ALERT`, `TWO_FA`, `DELIVERY_NOTIFICATION`, `SECURITY_ALERT`, `M2M`, `MIXED`, `HIGHER_EDUCATION`, `POLLING_VOTING`, `PUBLIC_SERVICE_ANNOUNCEMENT`, and `LOW_VOLUME`.
 
-Keep detailed TCR taxonomy and carrier-specific advice in a reference file. In the skill body, use only enough taxonomy to keep the submission honest.
+Each use case structurally accepts 1–5 samples, each no longer than 1,024 characters. The compliance layer requires at least two samples for marketing and mixed traffic, including low-volume mixed. Keep that policy distinction visible instead of pretending OpenAPI requires two for all traffic.
 
-### 4. Create or update Sent brand resources
+## Volume and status
 
-Use Sent’s brand endpoints when API work is in scope. The verified v3 API includes:
+`volume` is optional and, when supplied, is a numeric string. Values below `"2000"` use the documented low-volume tier; `"2000"` is the boundary to the next tier.
 
-| Operation | Endpoint | Notes |
-|---|---|---|
-| Create brand | `POST /v3/brands` | Creates a new brand and associated information. |
-| List brands | `GET /v3/brands` | Retrieves brands for the authenticated customer, including inherited brands where applicable. |
-| Update brand | `PUT /v3/brands/{brandId}` | Cannot update brands already submitted to TCR or inherited brands. |
-| Delete brand | `DELETE /v3/brands/{brandId}` | Deletes a brand that belongs to the authenticated customer. |
+Campaign responses currently expose statuses `SENT_CREATED`, `ACTIVE`, and `EXPIRED`, plus `submittedToTCR`. Preserve unknown future status strings. Do not confuse a successful Sent record creation with TCR submission or carrier activation.
 
-Use optional `Idempotency-Key` headers on create/update calls when retrying. Store the Sent brand ID returned by the API. Store any returned TCR identifiers separately only if the API response exposes them.
+## Safe workflow
 
-### 5. Create or update Sent campaign resources
+1. Confirm this is US A2P 10DLC traffic and the actual sending business is identified.
+2. Select brand/campaign inheritance.
+3. Validate the versioned evidence packet.
+4. Create or confirm the profile brand.
+5. Translate evidence into the exact camelCase campaign request.
+6. Validate locally and use `sandbox: true`.
+7. Show the payload and obtain confirmation before a real create/update/delete.
+8. Store profile ID, campaign ID, `submittedToTCR`, raw status, and review evidence.
+9. Complete the profile with required `webHookUrl` only after prerequisites are ready.
 
-Create campaigns under the relevant Sent brand. The verified v3 API says each campaign must include at least one use case with sample messages.
-
-| Operation | Endpoint | Notes |
-|---|---|---|
-| Create campaign | `POST /v3/brands/{brandId}/campaigns` | Links the campaign to the brand and requires use-case/sample-message data. |
-| List campaigns | `GET /v3/brands/{brandId}/campaigns` | Retrieves campaigns and their use cases/sample messages. |
-| Update campaign | `PUT /v3/brands/{brandId}/campaigns/{campaignId}` | Cannot update campaigns already submitted to TCR. |
-| Delete campaign | `DELETE /v3/brands/{brandId}/campaigns/{campaignId}` | Deletes a campaign within the brand. |
-
-Do not claim a public `tcr_campaign_id` field unless the actual response includes it. Refer to the Sent campaign ID for Sent API operations.
-
-### 6. Complete the Sender Profile setup
-
-After profile data, brand, and campaign prerequisites are ready, call or trigger profile completion through `POST /v3/profiles/{profileId}/complete`. The OpenAPI describes this as the final step in the profile compliance workflow, validating prerequisites and connecting profile configuration in the background.
-
-If completion fails, fix the missing prerequisite rather than creating duplicate brands or campaigns. Duplicate compliance objects increase confusion and can lead to sending from the wrong profile.
-
-### 7. Prepare the review-ready submission summary
-
-End the workflow with a compact summary the user can paste into Sent support, a dashboard form, or an internal ticket. Include legal identity, website, privacy policy, opt-in URL/evidence, use-case description, sample messages, opt-out instructions, Sent profile ID, Sent brand ID, Sent campaign ID, and any unresolved questions.
-
-**Example summary.**
-
-> “Acme Logistics LLC, EIN ending 1234, sends US SMS delivery notifications to customers who opt in at checkout. Website and privacy policy are live. Opt-in screenshot and URL are attached. Campaign use case is delivery notification. Sample messages match shipment status only and include opt-out instructions. Sent profile `...`, Sent brand `...`, Sent campaign `...` are ready for completion.”
-
-## Common rationalizations to avoid
-
-Do not register a marketing campaign as a utility or account-notification campaign because it may be cheaper or easier. The samples, opt-in flow, and actual traffic must match.
-
-Do not submit placeholder websites, private staging URLs, or missing privacy policies. Sent’s compliance guide calls for live URLs.
-
-Do not reuse one brand/campaign for unrelated customers. Compliance belongs to the sender and use case, not just the platform sending the API call.
-
-Do not edit a submitted brand or campaign in place if the API says submitted objects cannot be updated. Create the right correction path with Sent.
-
-Do not promise exact approval times beyond Sent’s guidance. Sent says TCR registration typically completes within 3 to 7 business days after the Sent compliance form is approved, with additional propagation time possible.
-
-## Verification checklist
-
-- [ ] The traffic is confirmed as US A2P SMS over a long-code route.
-- [ ] Legal business identity matches tax and website evidence.
-- [ ] Website and privacy policy URLs are live.
-- [ ] Opt-in evidence is concrete and matches the declared use case.
-- [ ] Sample messages are realistic and match the use case.
-- [ ] Opt-out instructions are included where applicable and consistent with the user experience.
-- [ ] Sent brand and campaign IDs are stored separately from any provider/TCR identifiers.
-- [ ] Profile completion is run only after profile, brand, and campaign prerequisites are ready.
-- [ ] Unverified throughput, carrier, or pricing claims are not presented as Sent facts.
-
-## Related skills
-
-Use `sender-profile-architect` when deciding whether brands, tenants, departments, or use cases need separate Sender Profiles.
-
-Use `rcs-agent-onboarding` when 10DLC work is needed for SMS fallback from RCS.
-
-Use `messaging-performance-analyzer` when registered traffic still shows delivery failures or filtering symptoms.
-
-Use `template-builder-ui` when the customer needs reusable SMS template copy that matches the registered use case.
-
-Use the `sent` skill for shared Sent terminology and routing.
-
-## Bundled references and scripts
-
-| File | Type | Purpose |
-|---|---|---|
-| `references/tcr-use-cases.md` | Lookup table | TCR use-case taxonomy, sample-message patterns, and rejection reasons. |
-| `references/10dlc-evidence-checklist.md` | Worked example | Field-by-field checklist for Sent's 10DLC compliance form. |
-| `references/10dlc-rejection-remediation.md` | Decision matrix | Common TCR / carrier rejection codes mapped to fix steps and re-submission etiquette. |
-| `scripts/validate_10dlc_packet.py` | Validation script | Pre-flight validator for a packet JSON. Run from the skill root: `python scripts/validate_10dlc_packet.py packet.json`. |
-| `scripts/fixtures/good.json` | Fixture | Complete valid packet (passes validator). |
-| `scripts/fixtures/bad.json` | Fixture | Packet with missing fields / invalid EIN / short sample (validator exits non-zero). |
-
-## Unverified claims to confirm or remove
-
-- Sent's `/v3/brands` and `/v3/brands/{id}/campaigns` endpoints exist; their internal mapping to TCR identifiers is opaque to the customer. Store the Sent brand and campaign IDs returned by the API — don't claim a public `tcr_brand_id` or `tcr_campaign_id` field unless an API response surfaces it.
-- Exact throughput limits, per-carrier caps, and vetting-score-to-throughput mapping are not in Sent's docs. The snapshot only confirms account-wide tier limits (Starter 60 msg/min, Growth 300 msg/min, Enterprise custom) — these are not TCR / carrier per-campaign throughput numbers.
-- Country-specific compliance, routing, and pricing claims beyond Sent's listed country-specific document requirements (AU, BE, PL, ZA, SE, TH, UK) require a current Sent source.
+Never use real consumer data in fixtures or samples. Use [references/tcr-use-cases.md](references/tcr-use-cases.md) for classification and [references/10dlc-rejection-remediation.md](references/10dlc-rejection-remediation.md) for failures.

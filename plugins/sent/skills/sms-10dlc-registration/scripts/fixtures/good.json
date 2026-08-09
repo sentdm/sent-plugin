@@ -1,34 +1,33 @@
 {
-  "legal_business_name": "Example Corp LLC",
-  "business_registration_number": "IL-12345678",
-  "business_type": "PRIVATE_PROFIT",
-  "industry_category": "RETAIL",
+  "schema_version": "sent-10dlc-evidence/v1",
+  "legal_business_name": "Acme Example LLC",
   "ein": "12-3456789",
-  "business_address": "123 Main St, Springfield, IL 62701, US",
-  "business_phone": "+12175550101",
+  "business_address": "123 Example Street, New York, NY 10001, US",
+  "business_phone": "+12025550100",
   "contact_email": "compliance@example.com",
   "website": "https://example.com",
   "privacy_policy_url": "https://example.com/privacy",
-  "opt_in_mechanism_url": "https://example.com/signup?sms=consent",
-  "opt_keywords": {
-    "stop": ["STOP", "UNSUBSCRIBE", "CANCEL"],
-    "start": ["START", "UNSTOP"],
-    "help": ["HELP", "INFO"]
+  "terms_and_conditions_url": "https://example.com/terms",
+  "opt_in_evidence": {
+    "method": "web_form",
+    "description": "A synthetic checkout form uses an unchecked SMS consent box.",
+    "proof_url": "https://example.com/sms-consent"
+  },
+  "message_flow": "Customers submit the web form and receive the opt-in confirmation before notifications begin.",
+  "autoresponses": {
+    "optinMessage": "Acme Example: You are subscribed. Msg frequency varies. Msg and data rates may apply. Reply HELP for help or STOP to opt out.",
+    "optoutMessage": "Acme Example: You are unsubscribed and will receive no more messages.",
+    "helpMessage": "Acme Example: Visit https://example.com/support for help.",
+    "optinKeywords": "START,YES",
+    "optoutKeywords": "STOP,UNSUBSCRIBE",
+    "helpKeywords": "HELP,INFO"
   },
   "use_cases": [
     {
-      "selection": "Notifications",
-      "description": "Shipping and delivery updates for orders placed on example.com.",
+      "messaging_use_case_us": "MARKETING",
       "sample_messages": [
-        "Example: Your order #1029 has shipped. Track: https://example.com/track/1029. Reply STOP to opt out.",
-        "Example: Order #1042 is out for delivery today. Reply STOP to opt out."
-      ]
-    },
-    {
-      "selection": "Authentication",
-      "description": "One-time login codes for example.com account holders.",
-      "sample_messages": [
-        "Example: Your verification code is 482910. It expires in 10 minutes."
+        "Acme Example: Save 10% on your next order. Reply STOP to opt out.",
+        "Acme Example: New items are available. Reply STOP to opt out."
       ]
     }
   ]
