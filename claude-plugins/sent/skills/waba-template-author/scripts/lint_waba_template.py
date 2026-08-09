@@ -4,6 +4,10 @@
 This validator intentionally accepts the Sent v3 request contract, not Meta's
 Cloud API ``components[]`` format. Meta payloads are useful reference material,
 but must be labelled and converted before they are sent to Sent.
+
+Exit codes:
+    0 - valid template payload (warnings may be printed)
+    1 - invalid payload or unreadable/malformed input
 """
 
 from __future__ import annotations
@@ -329,15 +333,15 @@ def main(argv: list[str] | None = None) -> int:
         payload = json.loads(args.path.read_text(encoding="utf-8"))
     except OSError as exc:
         print(f"could not read {args.path}: {exc}", file=sys.stderr)
-        return 2
+        return 1
     except json.JSONDecodeError as exc:
         print(f"invalid JSON in {args.path}: {exc}", file=sys.stderr)
-        return 2
+        return 1
     result = lint_template(payload)
     if result.warnings:
         print(_format("WARN", result.warnings))
     if result.errors:
-        print(_format("FAIL", result.errors))
+        print(_format("FAIL", result.errors), file=sys.stderr)
         return 1
     print("OK")
     return 0

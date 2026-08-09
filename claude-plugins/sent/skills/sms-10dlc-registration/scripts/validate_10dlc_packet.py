@@ -4,6 +4,10 @@
 This packet is readiness evidence, not the Sent campaign API request. Its
 snake_case fields are namespaced by an explicit schema version so they cannot
 be mistaken for Sent's camelCase contract.
+
+Exit codes:
+    0 - valid evidence packet
+    1 - invalid packet or unreadable/malformed input
 """
 
 from __future__ import annotations

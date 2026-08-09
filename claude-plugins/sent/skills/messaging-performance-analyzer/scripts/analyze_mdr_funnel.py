@@ -79,17 +79,28 @@ def _load_messages(path: Path) -> list[dict]:
         raise InputError(f"file not found: {path}")
     ext = path.suffix.lower()
     if ext == ".json":
-        with path.open("r", encoding="utf-8") as fh:
-            data = json.load(fh)
+        try:
+            with path.open("r", encoding="utf-8") as fh:
+                data = json.load(fh)
+        except json.JSONDecodeError as exc:
+            raise InputError(f"invalid JSON in {path}: {exc}") from exc
         if isinstance(data, dict) and "messages" in data:
             data = data["messages"]
         if not isinstance(data, list):
             raise InputError("JSON must be a list of message records or {\"messages\": [...]}")
-        return data
+        messages = data
     if ext == ".csv":
-        with path.open("r", encoding="utf-8", newline="") as fh:
-            return list(csv.DictReader(fh))
-    raise InputError(f"unsupported file extension '{ext}'; expected .json or .csv")
+        try:
+            with path.open("r", encoding="utf-8", newline="") as fh:
+                messages = list(csv.DictReader(fh))
+        except (csv.Error, UnicodeError) as exc:
+            raise InputError(f"invalid CSV in {path}: {exc}") from exc
+    elif ext != ".json":
+        raise InputError(f"unsupported file extension '{ext}'; expected .json or .csv")
+    for index, record in enumerate(messages, 1):
+        if not isinstance(record, dict):
+            raise InputError(f"record {index} must be an object")
+    return messages
 
 
 def _latest_stage(record: dict) -> str | None:
