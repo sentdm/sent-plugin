@@ -5,7 +5,7 @@ Use this checklist for every public release.
 ## Repository and package
 
 - Confirm the GitHub repository is public and the release commit is on the default branch.
-- Confirm the repository root contains `plugin.json`, `mcp.json`, `skills/`, and `assets/` for GitHub auto-discovery.
+- Confirm the repository root contains `plugin.json`, `mcp.json`, `public-surface.json`, `skills/`, and `assets/` for GitHub auto-discovery.
 - Confirm `.claude-plugin/marketplace.json` points to `./claude-plugins/sent`.
 - Confirm the Claude plugin contains its manifest, README, license, skills, commands, assets, and HTTPS MCP configuration.
 - Update the version consistently before release; plugin names are stable public identifiers and must not be renamed casually.
@@ -18,11 +18,13 @@ python3 scripts/generate_adapters.py --check
 python3 scripts/validate.py
 python3 scripts/test_validation_gates.py
 python3 scripts/test_fixtures.py
+python3 scripts/test_contracts.py
+python3 scripts/test_live_contract.py
 claude plugin validate . --strict
 claude plugin validate ./claude-plugins/sent --strict
 ```
 
-CI must pass on the exact commit being submitted. Resolve warnings as well as errors before submission.
+CI must pass on the exact commit being submitted. Resolve warnings as well as errors before submission. The dedicated contract/documentation freshness workflow runs on schedule, manual dispatch, and release; review its uploaded JSON artifact separately from pull-request validation.
 
 ## Public-facing review
 
