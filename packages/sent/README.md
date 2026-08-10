@@ -43,6 +43,12 @@ Install only the focused skills needed by a project by repeating `--skill <name>
 | `rcs-agent-onboarding` | Prepare RBM agent identity, carrier approval, capabilities, fallback, and launch evidence | [`skills/rcs-agent-onboarding/SKILL.md`](skills/rcs-agent-onboarding/SKILL.md) |
 | `sender-profile-architect` | Design multi-tenant Sender Profile boundaries, webhook routing, and lifecycle | [`skills/sender-profile-architect/SKILL.md`](skills/sender-profile-architect/SKILL.md) |
 | `template-builder-ui` | Design and audit tenant-facing SMS, WhatsApp, and RCS template-builder UX | [`skills/template-builder-ui/SKILL.md`](skills/template-builder-ui/SKILL.md) |
+| `sent-integration-starter` | Stand up and harden a Sent v3 integration end to end | [`skills/sent-integration-starter/SKILL.md`](skills/sent-integration-starter/SKILL.md) |
+| `sent-webhook-engineer` | Build and debug verified webhook receivers and delivery health | [`skills/sent-webhook-engineer/SKILL.md`](skills/sent-webhook-engineer/SKILL.md) |
+| `sent-routing-strategist` | Choose channels and diagnose route attempts and delivery outcomes | [`skills/sent-routing-strategist/SKILL.md`](skills/sent-routing-strategist/SKILL.md) |
+| `sent-two-way-messaging` | Design inbound, consent, and conversational flows | [`skills/sent-two-way-messaging/SKILL.md`](skills/sent-two-way-messaging/SKILL.md) |
+| `sent-profile-provisioning` | Execute the Sender Profile, campaign, and user lifecycle | [`skills/sent-profile-provisioning/SKILL.md`](skills/sent-profile-provisioning/SKILL.md) |
+| `migrate-to-sent` | Migrate from another CPaaS provider onto Sent | [`skills/migrate-to-sent/SKILL.md`](skills/migrate-to-sent/SKILL.md) |
 
 Each `SKILL.md` contains the discovery metadata and core workflow. Skill-local `references/` hold deeper specifications and examples, `scripts/` hold deterministic validators or analyzers, and `agents/openai.yaml` supplies optional host UI metadata.
 
@@ -59,6 +65,8 @@ The package declares `https://mcp.sent.dm/mcp` as a Streamable HTTP server.
 | Account | `account.get`, `balance.get`, `onboarding.status` |
 
 Use `sent-analytics` for aggregate dashboard totals and trends. Use `messaging-performance-analyzer` for message-level evidence, funnel drop-off, and root-cause diagnosis. Use `sent-templates` for existing records, `waba-template-author` for WhatsApp content, and `template-builder-ui` for product UX.
+
+For engineering work, use `sent-integration-starter` for new integrations, `sent-webhook-engineer` for receivers, `sent-routing-strategist` for channel and route decisions, `sent-two-way-messaging` for inbound and consent, `sent-profile-provisioning` to execute what `sender-profile-architect` designs, and `migrate-to-sent` when replacing an incumbent provider.
 
 ## Authorization
 

@@ -5,14 +5,14 @@
     "url": "https://sent.dm"
   },
   "metadata": {
-    "description": "Official Sent skills and remote MCP integration for messaging operations and specialist channel workflows.",
+    "description": "Official Sent skills and remote MCP integration for messaging engineering, operations, migration, and specialist channel workflows.",
     "version": "0.1.0"
   },
   "plugins": [
     {
       "name": "sent",
       "source": "./claude-plugins/sent",
-      "description": "Official Sent business messaging plugin for safe SMS, WhatsApp, RCS, contacts, templates, analytics, account readiness, delivery diagnosis, 10DLC, WABA, RBM, and Sender Profile workflows.",
+      "description": "Official Sent business messaging plugin for SMS, WhatsApp, RCS, API integration, webhooks, routing, two-way messaging, Sender Profiles, migration, compliance, analytics, and agent-safe operations.",
       "category": "Productivity"
     }
   ]

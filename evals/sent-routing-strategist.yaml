@@ -1,0 +1,29 @@
+skill: sent-routing-strategist
+cases:
+  - query: "I want Sent to try RCS first and fall back to SMS. Is channel ['rcs','sms'] right?"
+    expect: trigger
+    rationale: The canonical broadcast-versus-fallback misconception; the array duplicates delivery and automatic routing is the correct expression.
+  - query: "Every recipient got the message twice after we added a second channel."
+    expect: trigger
+    rationale: Duplicate delivery from a multi-channel array, diagnosed by recipients times channels arithmetic.
+  - query: "Why is the channel on this Sent message 'auto' and the status FAILED?"
+    expect: trigger
+    rationale: Terminal auto means the message ended before routing; this skill owns the status-and-channel diagnosis matrix.
+  - query: "Should I pin WhatsApp or let Sent choose the channel for transactional receipts?"
+    expect: trigger
+    rationale: Direct pinned-versus-automatic routing decision, including what pinning gives up.
+  - query: "Our WhatsApp message failed and then a second message arrived by SMS with the same ID — is that a bug?"
+    expect: trigger
+    rationale: Reroute reuses the same message id and re-fires queued and routed; expected automatic-routing behavior.
+  - query: "A message came back FILTERED. Should my worker retry it?"
+    expect: trigger
+    rationale: FILTERED is a policy gate rather than a carrier failure, so the retry decision rules belong here.
+  - query: "How do I verify the HMAC signature on the webhook that told me about this failure?"
+    expect: no_trigger
+    rationale: Signature verification and receiver construction belong to sent-webhook-engineer.
+  - query: "What is the cheapest SMS provider in Brazil?"
+    expect: no_trigger
+    rationale: Carrier commercial questions are outside the routing contract this skill describes.
+  - query: "Our delivery rate dropped this week across all channels — what changed?"
+    expect: ambiguous
+    rationale: Aggregate regression analysis belongs to messaging-performance-analyzer; route here only when the question narrows to route selection or reroute behavior for specific messages.

@@ -5,7 +5,15 @@
       "id": "llms-index",
       "url": "https://docs.sent.dm/llms.txt",
       "kind": "documentation-index",
-      "affected_skills": ["sent"],
+      "affected_skills": [
+        "migrate-to-sent",
+        "sent",
+        "sent-integration-starter",
+        "sent-profile-provisioning",
+        "sent-routing-strategist",
+        "sent-two-way-messaging",
+        "sent-webhook-engineer"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -30,8 +38,14 @@
         "sent-account-readiness",
         "sent-analytics",
         "sent-contacts",
+        "sent-integration-starter",
         "sent-messaging",
+        "sent-profile-provisioning",
+        "sent-routing-strategist",
         "sent-templates",
+        "sent-two-way-messaging",
+        "sent-webhook-engineer",
+        "migrate-to-sent",
         "sms-10dlc-registration",
         "waba-embedded-signup",
         "waba-template-author"
@@ -66,6 +80,10 @@
       "kind": "documentation",
       "affected_skills": [
         "messaging-performance-analyzer",
+        "migrate-to-sent",
+        "sent-integration-starter",
+        "sent-two-way-messaging",
+        "sent-webhook-engineer",
         "sender-profile-architect",
         "waba-embedded-signup"
       ],
@@ -89,7 +107,13 @@
       "id": "sender-profiles",
       "url": "https://docs.sent.dm/llms/start/concepts/sender-profiles.txt",
       "kind": "documentation",
-      "affected_skills": ["sender-profile-architect", "sms-10dlc-registration", "waba-embedded-signup"],
+      "affected_skills": [
+        "migrate-to-sent",
+        "sender-profile-architect",
+        "sent-profile-provisioning",
+        "sms-10dlc-registration",
+        "waba-embedded-signup"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -131,7 +155,14 @@
       "id": "routing-rcs",
       "url": "https://docs.sent.dm/llms/reference/channel-routing.txt",
       "kind": "documentation",
-      "affected_skills": ["messaging-performance-analyzer", "rcs-agent-onboarding", "sent-messaging"],
+      "affected_skills": [
+        "messaging-performance-analyzer",
+        "migrate-to-sent",
+        "rcs-agent-onboarding",
+        "sent-integration-starter",
+        "sent-messaging",
+        "sent-routing-strategist"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -144,6 +175,183 @@
           "fact": "routing.rcs_supported",
           "extractor": "contains",
           "pattern": "Pins the message to RCS",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "sdks",
+      "url": "https://docs.sent.dm/llms/sdks.txt",
+      "kind": "documentation",
+      "affected_skills": ["migrate-to-sent", "sent-integration-starter"],
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "sdk.typescript_package",
+          "extractor": "contains",
+          "pattern": "| **TypeScript** | `@sentdm/sentdm` |",
+          "expected": true
+        },
+        {
+          "fact": "sdk.python_package",
+          "extractor": "contains",
+          "pattern": "| **Python** | `sentdm` |",
+          "expected": true
+        },
+        {
+          "fact": "sdk.go_package",
+          "extractor": "contains",
+          "pattern": "| **Go** | `github.com/sentdm/sent-dm-go` |",
+          "expected": true
+        },
+        {
+          "fact": "sdk.java_package",
+          "extractor": "contains",
+          "pattern": "| **Java** | `dm.sent:sent-java` |",
+          "expected": true
+        },
+        {
+          "fact": "sdk.csharp_package",
+          "extractor": "contains",
+          "pattern": "| **C#** | `Sentdm` |",
+          "expected": true
+        },
+        {
+          "fact": "sdk.php_package",
+          "extractor": "contains",
+          "pattern": "| **PHP** | `sentdm/sent-dm-php` |",
+          "expected": true
+        },
+        {
+          "fact": "sdk.ruby_package",
+          "extractor": "contains",
+          "pattern": "| **Ruby** | `sentdm` |",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "per-request-credentials",
+      "url": "https://docs.sent.dm/llms/build/per-request-credentials.txt",
+      "kind": "documentation",
+      "affected_skills": ["sent-integration-starter", "sent-profile-provisioning"],
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "credentials.per_request_client",
+          "extractor": "contains",
+          "pattern": "there is no shared client",
+          "expected": true
+        },
+        {
+          "fact": "credentials.tenant_isolation",
+          "extractor": "contains",
+          "pattern": "one tenant's calls",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "idempotency",
+      "url": "https://docs.sent.dm/llms/reference/api/idempotency.txt",
+      "kind": "documentation",
+      "affected_skills": ["migrate-to-sent", "sent-integration-starter", "sent-profile-provisioning"],
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "idempotency.cache_duration",
+          "extractor": "contains",
+          "pattern": "Cache lifetime | 24 hours",
+          "expected": true
+        },
+        {
+          "fact": "idempotency.concurrent_conflict",
+          "extractor": "contains",
+          "pattern": "CONFLICT_001",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "webhook-signatures",
+      "url": "https://docs.sent.dm/llms/build/signature-verification.txt",
+      "kind": "documentation",
+      "affected_skills": ["migrate-to-sent", "sent-integration-starter", "sent-webhook-engineer"],
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "webhook.signature_tolerance_seconds",
+          "extractor": "contains",
+          "pattern": "300 seconds (5 minutes)",
+          "expected": true
+        },
+        {
+          "fact": "webhook.rotation_no_overlap",
+          "extractor": "contains",
+          "pattern": "old secret is invalid",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "webhook-receiver",
+      "url": "https://docs.sent.dm/llms/build/webhook-receiver.txt",
+      "kind": "documentation",
+      "affected_skills": ["sent-integration-starter", "sent-two-way-messaging", "sent-webhook-engineer"],
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "webhook.auto_disable_threshold",
+          "extractor": "regex_int",
+          "pattern": "After (\\d+) consecutive delivery failures",
+          "expected": 10
+        },
+        {
+          "fact": "webhook.dedupe_message_status",
+          "extractor": "contains",
+          "pattern": "message_id` +",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "two-way-messaging",
+      "url": "https://docs.sent.dm/llms/reference/two-way-messaging.txt",
+      "kind": "documentation",
+      "affected_skills": ["migrate-to-sent", "sent-two-way-messaging"],
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "consent.contact_channel_agnostic",
+          "extractor": "contains",
+          "pattern": "contact-level and channel-agnostic",
+          "expected": true
+        },
+        {
+          "fact": "conversation.uuid_v5",
+          "extractor": "contains",
+          "pattern": "RFC 4122 v5 UUID",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "profile-provisioning",
+      "url": "https://docs.sent.dm/llms/start/advanced/sub-account-profiles-api.txt",
+      "kind": "documentation",
+      "affected_skills": ["migrate-to-sent", "sent-profile-provisioning", "sender-profile-architect"],
+      "last_verified": "2026-08-09",
+      "checks": [
+        {
+          "fact": "profile.callback_single_attempt",
+          "extractor": "contains",
+          "pattern": "calls the webhook once and does not retry",
+          "expected": true
+        },
+        {
+          "fact": "profile.organization_scope_header",
+          "extractor": "contains",
+          "pattern": "x-profile-id",
           "expected": true
         }
       ]

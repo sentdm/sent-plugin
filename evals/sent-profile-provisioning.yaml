@@ -1,0 +1,29 @@
+skill: sent-profile-provisioning
+cases:
+  - query: "Walk me through the API calls to create a Sender Profile and get it to a sending state."
+    expect: trigger
+    rationale: The canonical provisioning sequence from create through completion, campaigns, and users.
+  - query: "My profile completion callback never arrived. What now?"
+    expect: trigger
+    rationale: The completion callback is delivered once with no retry, so the polling reconciliation path belongs here.
+  - query: "Should inherit_tcr_campaign be true or false for per-tenant 10DLC use cases?"
+    expect: trigger
+    rationale: Inheritance flag mechanics and the inherited-brand with dedicated-campaign pattern are core content.
+  - query: "How do I invite a teammate as a developer and make sure they can actually list users?"
+    expect: trigger
+    rationale: User invitation lifecycle plus the developer read floor and active-status requirement.
+  - query: "POST /v3/profiles returned 422 saying no WhatsApp Business Account is configured."
+    expect: trigger
+    rationale: Specific provisioning error tied to the three WhatsApp attachment paths.
+  - query: "Can I create an API key through the Sent API so each tenant gets its own?"
+    expect: trigger
+    rationale: Hard negative to correct; no key endpoints exist and key management is a dashboard operation.
+  - query: "Should each of my 50 merchants get its own profile or share one?"
+    expect: no_trigger
+    rationale: That isolation and blast-radius decision belongs to sender-profile-architect before any provisioning call.
+  - query: "Write the sample messages and pick the use case for our 10DLC campaign."
+    expect: no_trigger
+    rationale: Use-case selection and sample-copy policy belong to sms-10dlc-registration.
+  - query: "We need per-tenant WhatsApp numbers onboarded for 20 merchants."
+    expect: ambiguous
+    rationale: Profile creation with dedicated WABA credentials lives here, but the Embedded Signup onboarding flow itself belongs to waba-embedded-signup.

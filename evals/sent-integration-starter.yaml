@@ -1,0 +1,29 @@
+skill: sent-integration-starter
+cases:
+  - query: "Add Sent messaging to our Next.js app — which SDK and how do I wire it up?"
+    expect: trigger
+    rationale: First-time integration covering SDK selection, client placement, and the four-file minimum shape.
+  - query: "What retry policy should my worker use for Sent API errors?"
+    expect: trigger
+    rationale: Retry classification by error family, including the auth-lockout stop rule, is owned here.
+  - query: "I got a 409 CONFLICT_001 from Sent. What does that mean?"
+    expect: trigger
+    rationale: "Idempotency semantics: a concurrent duplicate in flight, retried once after a pause."
+  - query: "How should I use Idempotency-Key so a timeout doesn't double-send?"
+    expect: trigger
+    rationale: Deterministic key derivation, the 24-hour cache, and replay headers are core content.
+  - query: "We keep hitting 429s during a bulk campaign — how do I pace requests?"
+    expect: trigger
+    rationale: The 200-per-minute budget, the 1,000-recipient batch ceiling, and headers only on 429 responses.
+  - query: "Is our Sent integration ready for production?"
+    expect: trigger
+    rationale: The launch checklist and hardening stage are precisely this skill's deliverable.
+  - query: "Send a message to +14155551234 right now confirming their order."
+    expect: no_trigger
+    rationale: A single confirmed send is sent-messaging; this skill builds and hardens the integration rather than executing sends.
+  - query: "Which channel should I use so WhatsApp falls back to SMS?"
+    expect: no_trigger
+    rationale: Channel selection and fallback semantics belong to sent-routing-strategist.
+  - query: "We're moving off Twilio to Sent — where do I start?"
+    expect: ambiguous
+    rationale: migrate-to-sent owns the provider mapping and cutover; this skill takes over for greenfield client, retry, and receiver hardening once the migration plan exists.

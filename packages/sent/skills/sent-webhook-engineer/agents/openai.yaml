@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sent Webhook Engineer"
+  short_description: "Build and debug Sent webhook receivers"
+  default_prompt: "Use $sent-webhook-engineer to review my Sent webhook receiver and its signature verification."

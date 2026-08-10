@@ -734,8 +734,18 @@ def validate_contract_manifest(validation: Validation) -> None:
         "/v3/messages",
         "/v3/messages/{id}",
         "/v3/messages/{id}/activities",
+        "/v3/contacts/{id}",
+        "/v3/conversations",
+        "/v3/conversations/{id}",
+        "/v3/users",
+        "/v3/users/{userId}",
         "/v3/webhooks",
         "/v3/webhooks/event-types",
+        "/v3/webhooks/{id}",
+        "/v3/webhooks/{id}/events",
+        "/v3/webhooks/{id}/rotate-secret",
+        "/v3/webhooks/{id}/test",
+        "/v3/webhooks/{id}/toggle-status",
     }
     validation.check(set(paths) == expected_paths, "Sent contract manifest critical path set drifted")
 
