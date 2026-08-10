@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sent Two-Way Messaging"
+  short_description: "Design inbound, consent, and reply flows"
+  default_prompt: "Use $sent-two-way-messaging to design how my app handles inbound Sent messages and opt-out keywords."

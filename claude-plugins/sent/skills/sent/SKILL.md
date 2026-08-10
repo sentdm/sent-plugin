@@ -49,6 +49,19 @@ Do **not** use when:
 | Diagnosing delivery from MDR exports, funnels, cohorts, or cross-channel failure codes | `messaging-performance-analyzer` |
 | Designing or auditing a tenant-facing template-builder UI | `template-builder-ui` |
 
+### Engineering and integration
+
+| User intent | Target skill |
+|---|---|
+| Adding Sent to a codebase, choosing an SDK, or hardening retries, idempotency, and error handling before launch | `sent-integration-starter` |
+| Building or debugging a webhook receiver, signature verification, dedupe, or an auto-disabled endpoint | `sent-webhook-engineer` |
+| Choosing the channel field, expecting cross-channel fallback, or interpreting a route, reroute, or delivery outcome | `sent-routing-strategist` |
+| Handling inbound messages, opt-out keywords, consent state, the WhatsApp 24-hour window, or conversation history | `sent-two-way-messaging` |
+| Executing the Sender Profile lifecycle over the API, including completion callbacks, campaigns, and user roles | `sent-profile-provisioning` |
+| Replacing Twilio, Sinch, Infobip, Vonage, or Bird with Sent, including cutover and rollback planning | `migrate-to-sent` |
+
+Within this group, note two frequent hand-offs: `sender-profile-architect` decides the tenancy boundary and `sent-profile-provisioning` implements it, while `migrate-to-sent` plans a provider replacement and `sent-integration-starter` hardens the resulting integration.
+
 If the request matches one row cleanly, invoke that skill and stop. If it spans several rows, state the proposed order and begin with the prerequisite. For example, check `sent-account-readiness` before a live send, use `sent-templates` to locate an existing template before `sent-messaging`, and use `messaging-performance-analyzer` when the user provides an export rather than asking for live dashboard metrics.
 
 ## Clarifying questions to ask before routing
@@ -70,7 +83,7 @@ One question per turn is fine; never fire all seven at once.
 This skill is not a fallback for general questions. If the user asks about:
 - **Balance, onboarding state, or whether the selected account can send** — use `sent-account-readiness`.
 - **Contracts, plan pricing, invoices, or account access that the available operations cannot answer** — direct them to Sent support or `https://docs.sent.dm`.
-- **Generic engineering** such as retries, queueing, or observability with no Sent-specific work — answer normally.
+- **Generic engineering** such as retries, queueing, or observability with no Sent-specific work — answer normally; route to `sent-integration-starter` once the question involves Sent's own retry, idempotency, or rate-limit contract.
 - **Meta, Google, TCR, or carrier policy outside a specialist skill's scope** — use current upstream documentation.
 
 If after the clarifying questions the request still doesn't fit any target skill, say so plainly. Don't force a route.

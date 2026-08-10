@@ -1,0 +1,29 @@
+skill: migrate-to-sent
+cases:
+  - query: "We're moving off Sinch to Sent. What's the migration plan?"
+    expect: trigger
+    rationale: End-to-end provider migration covering mapping, dual-run, cutover, and rollback.
+  - query: "Our Vonage code uses a failover array — what's the Sent equivalent?"
+    expect: trigger
+    rationale: The central translation problem; an ordered failover array must become automatic routing rather than a channel array.
+  - query: "How do I map Infobip's Blocklist onto Sent's opt-out model?"
+    expect: trigger
+    rationale: Suppression-store reconciliation, including that Sent consent is channel-agnostic.
+  - query: "Can I reuse our MessageBird webhook signature verifier for Sent?"
+    expect: trigger
+    rationale: Hard negative to correct; MessageBird signs over a body hash, so the verifier is not portable.
+  - query: "Our handler branches on Twilio error 21610 — what replaces it?"
+    expect: trigger
+    rationale: Numeric provider codes become string error families, and opted-out sends surface as FILTERED rather than an error.
+  - query: "What should we compare during a dual-run before cutting over to Sent?"
+    expect: trigger
+    rationale: The comparison metrics and rollback triggers are core deliverables of the cutover playbook.
+  - query: "Translate this specific Twilio Node snippet into Sent line by line."
+    expect: trigger
+    rationale: Provider-specific code translation is part of the migration inventory and rewrite workflow.
+  - query: "Set up a brand new Sent integration in our greenfield Next.js app."
+    expect: no_trigger
+    rationale: No incumbent provider to migrate from; sent-integration-starter owns greenfield setup.
+  - query: "Should each merchant get its own Sender Profile after we migrate from Twilio subaccounts?"
+    expect: ambiguous
+    rationale: The subaccount-to-profile mapping is migration content, but the isolation decision itself belongs to sender-profile-architect.

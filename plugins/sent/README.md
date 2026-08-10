@@ -19,6 +19,12 @@ This generated host adapter packages the official Sent Agent Skills and remote M
 | `rcs-agent-onboarding` | Prepare an RBM agent for approval and launch | [`skills/rcs-agent-onboarding/SKILL.md`](skills/rcs-agent-onboarding/SKILL.md) |
 | `sender-profile-architect` | Design multi-tenant Sender Profile architecture | [`skills/sender-profile-architect/SKILL.md`](skills/sender-profile-architect/SKILL.md) |
 | `template-builder-ui` | Design cross-channel template-builder UX | [`skills/template-builder-ui/SKILL.md`](skills/template-builder-ui/SKILL.md) |
+| `sent-integration-starter` | Stand up and harden a Sent v3 integration | [`skills/sent-integration-starter/SKILL.md`](skills/sent-integration-starter/SKILL.md) |
+| `sent-webhook-engineer` | Build and debug verified webhook receivers | [`skills/sent-webhook-engineer/SKILL.md`](skills/sent-webhook-engineer/SKILL.md) |
+| `sent-routing-strategist` | Choose channels and diagnose route outcomes | [`skills/sent-routing-strategist/SKILL.md`](skills/sent-routing-strategist/SKILL.md) |
+| `sent-two-way-messaging` | Design inbound, consent, and conversational flows | [`skills/sent-two-way-messaging/SKILL.md`](skills/sent-two-way-messaging/SKILL.md) |
+| `sent-profile-provisioning` | Execute the Sender Profile and user lifecycle | [`skills/sent-profile-provisioning/SKILL.md`](skills/sent-profile-provisioning/SKILL.md) |
+| `migrate-to-sent` | Migrate from another CPaaS provider onto Sent | [`skills/migrate-to-sent/SKILL.md`](skills/migrate-to-sent/SKILL.md) |
 
 To install the skills without the host adapter, list or select them with the Skills CLI:
 

@@ -13,8 +13,18 @@
     "/v3/messages": ["POST"],
     "/v3/messages/{id}": ["GET"],
     "/v3/messages/{id}/activities": ["GET"],
+    "/v3/contacts/{id}": ["DELETE", "GET", "PATCH"],
+    "/v3/conversations": ["GET"],
+    "/v3/conversations/{id}": ["GET"],
+    "/v3/users": ["GET", "POST"],
+    "/v3/users/{userId}": ["DELETE", "GET", "PATCH"],
     "/v3/webhooks": ["GET", "POST"],
-    "/v3/webhooks/event-types": ["GET"]
+    "/v3/webhooks/event-types": ["GET"],
+    "/v3/webhooks/{id}": ["DELETE", "GET", "PUT"],
+    "/v3/webhooks/{id}/events": ["GET"],
+    "/v3/webhooks/{id}/rotate-secret": ["POST"],
+    "/v3/webhooks/{id}/test": ["POST"],
+    "/v3/webhooks/{id}/toggle-status": ["PATCH"]
   },
   "retired_guidance_paths": [
     "/v3/brands",

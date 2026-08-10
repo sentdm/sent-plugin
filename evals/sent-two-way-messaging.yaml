@@ -1,0 +1,29 @@
+skill: sent-two-way-messaging
+cases:
+  - query: "Do I need to handle STOP myself when I receive a message.received event from Sent?"
+    expect: trigger
+    rationale: The platform applies consent before delivery; the application mirrors the exact match locally for evidence without writing consent to Sent again.
+  - query: "Which opt-out and opt-in keywords does Sent handle by default?"
+    expect: trigger
+    rationale: The documented ten-keyword set and the exact-match rule are core content of this skill.
+  - query: "A customer replied a day later and my WhatsApp auto-reply stopped working."
+    expect: trigger
+    rationale: The 24-hour customer service window requires an approved template outside it; this is the reply-path decision tree.
+  - query: "How do I page through a customer's conversation history on Sent?"
+    expect: trigger
+    rationale: Read-only conversation endpoints with required page and page_size, plus the derived UUIDv5 conversation id.
+  - query: "Can I set opt_out back to false for a contact who texted STOP?"
+    expect: trigger
+    rationale: Technically writable but a compliance decision requiring documented fresh consent; the skill must surface that.
+  - query: "We send from an alphanumeric sender ID — will STOP still work?"
+    expect: trigger
+    rationale: SMS inbound is conditional on an MO-capable provider and number type; alphanumeric senders never receive inbound.
+  - query: "How do I verify the webhook signature before trusting the inbound payload?"
+    expect: no_trigger
+    rationale: Signature verification, replay windows, and dedupe mechanics belong to sent-webhook-engineer.
+  - query: "Write the copy for a WhatsApp utility template and pick its category."
+    expect: no_trigger
+    rationale: Template authoring and Meta category selection belong to waba-template-author.
+  - query: "Our outbound campaign shows a lot of FILTERED messages — what is going on?"
+    expect: ambiguous
+    rationale: Consent suppression is this skill's domain, but route denials and delivery-outcome interpretation belong to sent-routing-strategist; decide after checking whether contacts are opted out.

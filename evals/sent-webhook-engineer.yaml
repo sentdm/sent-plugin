@@ -1,0 +1,29 @@
+skill: sent-webhook-engineer
+cases:
+  - query: "My Sent webhook returns 401 for every event even though I copied the signing secret correctly."
+    expect: trigger
+    rationale: Canonical signature-verification failure; the skill owns the raw-body, whsec_ prefix, and replay-window diagnosis order.
+  - query: "How do I verify x-webhook-signature in an Express app?"
+    expect: trigger
+    rationale: Direct request for the HMAC scheme plus the framework raw-body accessor, both owned by this skill.
+  - query: "Sent stopped delivering webhooks to my endpoint and the dashboard shows it as inactive."
+    expect: trigger
+    rationale: Auto-disable after ten consecutive failures, with the delivery-log triage and re-enable sequence.
+  - query: "Can I use x-webhook-id to deduplicate Sent events?"
+    expect: trigger
+    rationale: Hard negative that must be corrected; x-webhook-id is the endpoint UUID, so dedupe keys must be derived from payload semantics.
+  - query: "I need to rotate our webhook signing secret without dropping events."
+    expect: trigger
+    rationale: Rotation invalidates the old secret immediately, so the dual-secret receiver sequence is required knowledge here.
+  - query: "Why did I get message.queued and message.routed twice for the same message_id?"
+    expect: trigger
+    rationale: Reroute re-runs the pipeline on the same message id; the event-stream and idempotency guidance lives in this skill.
+  - query: "Write a generic HMAC webhook verifier for my Stripe integration."
+    expect: no_trigger
+    rationale: No Sent context and a different signature scheme; this belongs to general engineering rather than the Sent webhook contract.
+  - query: "Our WhatsApp template was rejected and I saw it in a webhook payload."
+    expect: no_trigger
+    rationale: Template rejection content and category remediation belong to waba-template-author; only the envelope shape is this skill's concern.
+  - query: "Deliveries are fine but our delivery rate dropped 12% this week — help me investigate."
+    expect: ambiguous
+    rationale: Route to messaging-performance-analyzer for aggregate delivery diagnosis, and here only if the cause turns out to be dropped or unprocessed webhook events.
