@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   freshness-and-routing:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       SENT_ROUTING_EVAL_MODEL: ${{ vars.SENT_ROUTING_EVAL_MODEL || 'gpt-5-mini' }}
