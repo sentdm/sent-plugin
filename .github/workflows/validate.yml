@@ -30,7 +30,7 @@ jobs:
           python -m pip install "skills-ref @ git+https://github.com/agentskills/agentskills.git@217be548739f21d6008915c29aefe320ea1a90af#subdirectory=skills-ref"
 
       - name: Install Claude Code validator
-        run: npm install --global @anthropic-ai/claude-code@2.1.226
+        run: npm install --global @anthropic-ai/claude-code@2.1.287
 
       - name: Reject generated adapter drift
         run: python scripts/generate_adapters.py --check

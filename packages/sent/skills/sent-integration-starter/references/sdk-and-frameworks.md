@@ -4,7 +4,7 @@
 
 - [Package matrix](#package-matrix)
 - [Client construction per language](#client-construction-per-language)
-- [Configuration and environment variables](#configuration-and-environment-variables)
+- [Explicit application configuration](#explicit-application-configuration)
 - [Framework wiring](#framework-wiring)
 - [Background processing per ecosystem](#background-processing-per-ecosystem)
 - [Multi-tenant credential patterns](#multi-tenant-credential-patterns)
@@ -29,11 +29,13 @@ No SDK ships a webhook signature verifier in any language. That code is always a
 
 ## Client construction per language
 
+These are application examples, not plugin authentication code. Each `apiKey` or `api_key` below is a non-empty value explicitly supplied by the application owner for the intended account. Validate it before construction so an absent value cannot trigger an SDK environment fallback. Never read the plugin installer's environment, credential store, or MCP tokens. Plugin operations use client-managed OAuth instead.
+
 ```typescript
 import SentDm from '@sentdm/sentdm';
 
-// Reads SENT_DM_API_KEY. Options: apiKey, baseUrl, maxRetries, timeout, logLevel.
-export const sent = new SentDm({ maxRetries: 3, timeout: 30_000 });
+// apiKey is explicitly supplied for the authorized application account.
+export const sent = new SentDm({ apiKey, maxRetries: 3, timeout: 30_000 });
 
 const response = await sent.messages.send({
   to: ['+14155551234'],
@@ -44,8 +46,8 @@ const response = await sent.messages.send({
 ```python
 from sent_dm import Sent, AsyncSent
 
-client = Sent(max_retries=2, timeout=60.0)      # reads SENT_DM_API_KEY
-async_client = AsyncSent()
+client = Sent(api_key=api_key, max_retries=2, timeout=60.0)
+async_client = AsyncSent(api_key=api_key)
 
 response = client.messages.send(
     to=["+14155551234"],
@@ -54,46 +56,40 @@ response = client.messages.send(
 ```
 
 ```go
-client := sentdm.NewClient()                     // or option.WithAPIKey(...)
+client := sentdm.NewClient(option.WithAPIKey(apiKey))
 response, err := client.Messages.Send(ctx, sentdm.MessageSendParams{
     To: []string{"+14155551234"},
 })
 ```
 
 ```java
-SentClient client = SentOkHttpClient.fromEnv();  // SENT_DM_API_KEY or sent.dmApiKey
+SentClient client = SentOkHttpClient.builder().apiKey(apiKey).build();
 MessageSendResponse response = client.messages().send(params);
 ```
 
 ```csharp
 using Sentdm;
-SentClient client = new();                       // reads SENT_DM_API_KEY
+SentClient client = new() { ApiKey = apiKey };
 var response = await client.Messages.Send(body);
 ```
 
 ```php
 use SentDm\Client;
-$client = new Client($_ENV['SENT_DM_API_KEY']);  // key is an explicit constructor argument
+$client = new Client(apiKey: $apiKey);
 $result = $client->messages->send(to: ['+14155551234'], template: ['name' => 'order_confirmation']);
 ```
 
 ```ruby
 require "sentdm"
-client = Sentdm::Client.new                      # reads SENT_DM_API_KEY
+client = Sentdm::Client.new(api_key: api_key)
 client.messages.send_(to: ["+14155551234"], template: { name: "order_confirmation" })
 ```
 
 Java and C# expose both synchronous and asynchronous clients; Python offers `Sent` and `AsyncSent`; TypeScript and C# are promise- or task-based only; Go and PHP and Ruby are synchronous, with Go carrying a `context.Context` on every call.
 
-## Configuration and environment variables
+## Explicit application configuration
 
-| Variable | Purpose | Read automatically |
-| --- | --- | --- |
-| `SENT_DM_API_KEY` | REST credential sent as `x-api-key` | Yes, in every SDK except PHP |
-| `SENT_DM_WEBHOOK_SECRET` | `whsec_`-prefixed webhook signing secret | No; application code reads it |
-| `SENT_BASE_URL` | Override the API base URL | Java and C# read it; others take a constructor option |
-
-Older documentation pages use `SENT_API_KEY` and `SENT_WEBHOOK_SECRET`. Both name sets appear in official material; standardize new code on the `SENT_DM_` names because the SDK defaults use them, and accept the shorter names as aliases when adopting existing code.
+Pass the authorized application's API key as the SDK's explicit credential option. Pass a webhook signing secret to verification helpers as a separate argument, resolved for the received webhook id. Keep both values in application-owned secret storage and do not print them, put them in prompts, or reuse installer credentials. This plugin does not declare user-config API keys because its MCP connection uses client-managed OAuth.
 
 For a single-account service, validate the server-managed key at startup with the ecosystem's schema tooling — `zod` in Node, `pydantic-settings` in Python, `@nestjs/config`, `IOptions` with `[Required]` in .NET — so a missing key fails the deployment rather than the first customer send. For a multi-tenant proxy, validate non-secret configuration at startup and reject each request whose resolved credential is absent or malformed.
 

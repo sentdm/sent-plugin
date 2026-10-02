@@ -13,15 +13,15 @@ Direct Sent v3 REST requests authenticate with the `x-api-key` header. An applic
 
 | Language | Package | Client |
 | --- | --- | --- |
-| TypeScript | `@sentdm/sentdm` | `new SentDm()` |
-| Python | `sentdm` (imports `sent_dm`) | `Sent()` or `AsyncSent()` |
-| Go | `github.com/sentdm/sent-dm-go` | `sentdm.NewClient()` |
-| Java | `dm.sent:sent-java` | `SentOkHttpClient.fromEnv()` |
-| C# | `Sentdm` | `new SentClient()` |
+| TypeScript | `@sentdm/sentdm` | `new SentDm({ apiKey })` |
+| Python | `sentdm` (imports `sent_dm`) | `Sent(api_key=api_key)` or `AsyncSent(api_key=api_key)` |
+| Go | `github.com/sentdm/sent-dm-go` | `sentdm.NewClient(option.WithAPIKey(apiKey))` |
+| Java | `dm.sent:sent-java` | `SentOkHttpClient.builder().apiKey(apiKey).build()` |
+| C# | `Sentdm` | `new SentClient { ApiKey = apiKey }` |
 | PHP | `sentdm/sent-dm-php` | `new SentDm\Client($apiKey)` |
-| Ruby | `sentdm` | `Sentdm::Client.new` |
+| Ruby | `sentdm` | `Sentdm::Client.new(api_key: api_key)` |
 
-Every SDK except PHP reads `SENT_DM_API_KEY` automatically. Single-endpoint receiver samples read `SENT_DM_WEBHOOK_SECRET`; multi-tenant production receivers need a secret registry keyed by webhook id instead of one process-wide secret. Older documentation uses `SENT_API_KEY` and `SENT_WEBHOOK_SECRET` — treat those as aliases and standardize on the `SENT_DM_` names.
+For generated application code, require an explicit, non-empty API key supplied by the application owner and pass it through the SDK's credential option. Inject the signing secret resolved for each webhook id into receiver helpers. Never inspect the plugin installer's environment, credential store, or MCP tokens; the plugin itself authenticates through client-managed OAuth. Multi-tenant production receivers need a secret registry keyed by webhook id.
 
 Choose the client lifecycle from the credential model. A single-account service with one server-managed key should reuse a long-lived client and its connection pool. A multi-tenant proxy that resolves a caller or profile credential per request should construct the client for that request and discard it, so tenant credentials cannot leak through shared state. Framework-specific wiring, the Ruby `messages.send_` naming quirk, and per-ecosystem background-work choices are in [references/sdk-and-frameworks.md](references/sdk-and-frameworks.md).
 
@@ -81,7 +81,7 @@ Log `meta.request_id` on every response, success or failure — it is the correl
 
 ### Launch checklist
 
-- [ ] Credentials load from the environment; nothing is committed, and separate keys exist per environment.
+- [ ] Credentials are explicitly supplied from application-owned configuration; nothing is committed, and separate keys exist per environment.
 - [ ] Client lifecycle matches credential scope: shared for one server-managed key, per request for tenant-supplied credentials.
 - [ ] `Idempotency-Key` on every mutating call, derived deterministically.
 - [ ] Retry policy distinguishes retryable from terminal by error family.

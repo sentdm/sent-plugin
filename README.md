@@ -171,3 +171,5 @@ Dashboard volume counts delivered/read outbound SMS and WhatsApp over supported 
 Use the connected server's tool schemas for argument names and availability. The [public MCP landing page](https://mcp.sent.dm) lists the current surface; some documentation pages may describe an earlier catalog.
 
 The bundled migration inventory scanner reads local regular files in the selected repository and makes no network requests. It skips symbolic links and environment files and omits source excerpts from reports. Other bundled utilities validate supplied local payloads or analyze supplied local exports. Remote account reads and authorized writes use the declared Sent MCP endpoint.
+
+The webhook signature utility runs locally with an explicitly supplied signing secret on standard input (`--secret-stdin`); it makes no network requests and does not read installer credentials or environment variables. Application integration examples require explicitly supplied API keys and signing secrets. Plugin authentication remains client-managed OAuth.

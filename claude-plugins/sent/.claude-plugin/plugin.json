@@ -1,6 +1,6 @@
 {
   "name": "sent",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Official Sent plugin for SMS, WhatsApp, RCS, scheduled template sends, Sender Profiles, SMS compliance, authorized feedback, contacts, analytics, API integration, webhooks, routing, and migration.",
   "author": {
     "name": "Sent",
@@ -36,6 +36,10 @@
     "feedback",
     "scheduled-messaging"
   ],
+  "documentationUrl": "https://github.com/sentdm/sent-plugin#readme",
+  "supportUrl": "https://www.sent.dm/en/company/contact-support",
+  "privacyPolicyUrl": "https://www.sent.dm/en/legal/privacy-policy",
+  "termsOfServiceUrl": "https://www.sent.dm/en/legal/terms-of-service",
   "commands": "./.claude/commands",
   "skills": "./skills",
   "mcpServers": "./.mcp.json"

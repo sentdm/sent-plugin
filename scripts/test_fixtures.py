@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import base64
 import importlib.util
 import json
 import os
@@ -11,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import time
 from pathlib import Path
 from types import ModuleType
 
@@ -38,6 +40,8 @@ CAMPAIGN = load_module("sent_campaign_validator", TEN_DLC_ROOT / "validate_campa
 TEMPLATE = load_module("sent_template_linter", TEMPLATE_ROOT / "lint_waba_template.py")
 INVENTORY_SCRIPT = SKILLS / "migrate-to-sent" / "scripts" / "inventory_scan.py"
 INVENTORY = load_module("sent_inventory_scanner", INVENTORY_SCRIPT)
+SIGNATURE_SCRIPT = SKILLS / "sent-webhook-engineer" / "scripts" / "verify_signature.py"
+SIGNATURE = load_module("sent_signature_verifier", SIGNATURE_SCRIPT)
 
 
 def read_fixture(root: Path, name: str) -> object:
@@ -490,6 +494,32 @@ class PublicCliBehaviorTests(unittest.TestCase):
         self.assertEqual(result.returncode, 3, (result.stdout, result.stderr))
         report = json.loads(result.stdout)
         self.assertEqual(report["error_codes"], {"ERR_ROUTE_DENIED": 1})
+
+
+class SignatureCredentialTests(unittest.TestCase):
+    def test_secret_requires_explicit_input_and_never_uses_environment(self) -> None:
+        secret = "whsec_" + base64.b64encode(b"synthetic-signing-key-0123456789").decode()
+        with tempfile.TemporaryDirectory() as directory:
+            body = Path(directory) / "event.json"
+            body.write_text('{}')
+            command = [sys.executable, str(SIGNATURE_SCRIPT), "--sign", "--body-file", str(body),
+                       "--webhook-id", "synthetic-webhook", "--timestamp", str(int(time.time()))]
+            environment = {**os.environ, "SENT_DM_WEBHOOK_SECRET": secret}
+            absent = subprocess.run(command, env=environment, capture_output=True, text=True, timeout=10)
+            self.assertEqual(absent.returncode, SIGNATURE.EXIT_USAGE)
+            self.assertNotIn(secret, absent.stdout + absent.stderr)
+            supplied = subprocess.run(command + ["--secret-stdin"], input=secret,
+                                      env={**environment, "SENT_DM_WEBHOOK_SECRET": "invalid"},
+                                      capture_output=True, text=True, timeout=10)
+            self.assertEqual(supplied.returncode, SIGNATURE.EXIT_VALID, supplied.stderr)
+            expected = SIGNATURE.compute_signature(secret, "synthetic-webhook", command[-1], b'{}')
+            self.assertIn(expected, supplied.stdout)
+            self.assertNotIn(secret, supplied.stdout + supplied.stderr)
+            for value in ("", "invalid!", "x" * 4097):
+                invalid = subprocess.run(command + ["--secret-stdin"], input=value,
+                                         capture_output=True, text=True, timeout=10)
+                self.assertEqual(invalid.returncode, SIGNATURE.EXIT_USAGE)
+                self.assertNotIn("Traceback", invalid.stderr)
 
 
 class InventorySecurityTests(unittest.TestCase):
