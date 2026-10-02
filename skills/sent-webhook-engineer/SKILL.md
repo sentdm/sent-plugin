@@ -28,6 +28,8 @@ Verification procedure, in order:
 
 The scheme is Svix-compatible. No Sent SDK ships a verification helper in any language, so this code is always hand-written — use [scripts/verify_signature.py](scripts/verify_signature.py) as the reference implementation and oracle.
 
+The local utility accepts a signing secret explicitly on standard input with `--secret-stdin` and makes no network requests. It never reads environment variables or installer credentials. Supply only the secret authorized for the delivery being checked; do not put it in command arguments or chat prompts.
+
 **`x-webhook-id` is not an event id.** It identifies the endpoint and repeats forever. Using it as a dedupe key silently collapses every event into one. Read [references/webhook-signature-and-dedupe.md](references/webhook-signature-and-dedupe.md) for the dedupe keys to derive per event type.
 
 ## Failure triage order

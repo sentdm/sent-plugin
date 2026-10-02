@@ -33,7 +33,7 @@ Every recipe follows the same four steps: read the raw body, verify the signatur
 | Sinatra | `request.body.read` then `request.body.rewind` | Same |
 | ASP.NET Core | `new StreamReader(request.Body).ReadToEndAsync()` | Read before model binding touches the stream |
 
-Environment variables: the SDKs read `SENT_DM_API_KEY` by default, and the receiver samples use `SENT_DM_WEBHOOK_SECRET`. Older documentation pages use `SENT_API_KEY` and `SENT_WEBHOOK_SECRET`; treat those as aliases and standardize on the `SENT_DM_` names in new code.
+These are receiver application examples, not plugin authentication code. Supply the signing secret explicitly from application-owned configuration, resolved for the received webhook id. The `signingSecret` and `signing_secret` variables below represent that authorized, injected value. Reject missing values; never inspect the plugin installer's environment, credential store, or MCP tokens. The plugin's MCP connection uses client-managed OAuth.
 
 ## Node and TypeScript
 
@@ -42,8 +42,7 @@ import crypto from "node:crypto";
 
 const TOLERANCE_SECONDS = 300;
 
-export function verify(rawBody: string, webhookId: string, timestamp: string, header: string): boolean {
-  const secret = process.env.SENT_DM_WEBHOOK_SECRET ?? "";
+export function verify(rawBody: string, webhookId: string, timestamp: string, header: string, secret: string): boolean {
   if (!secret || !header?.startsWith("v1,")) return false;
   if (Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > TOLERANCE_SECONDS) return false;
 
@@ -67,6 +66,7 @@ export async function POST(request: Request): Promise<Response> {
     request.headers.get("x-webhook-id") ?? "",
     request.headers.get("x-webhook-timestamp") ?? "",
     request.headers.get("x-webhook-signature") ?? "",
+    signingSecret,
   );
   if (!ok) return new Response("invalid signature", { status: 401 });
 
@@ -80,7 +80,7 @@ Express, scoping the raw parser to the webhook path only:
 ```js
 app.post("/webhooks/sent", express.raw({ type: "application/json" }), (req, res) => {
   const rawBody = req.body.toString("utf8");
-  if (!verify(rawBody, req.get("x-webhook-id"), req.get("x-webhook-timestamp"), req.get("x-webhook-signature"))) {
+  if (!verify(rawBody, req.get("x-webhook-id"), req.get("x-webhook-timestamp"), req.get("x-webhook-signature"), signingSecret)) {
     return res.status(401).send("invalid signature");
   }
   res.status(200).end();
@@ -93,13 +93,12 @@ Mount `express.json()` on other routers rather than globally with `app.use`. In 
 ## Python
 
 ```python
-import base64, hashlib, hmac, os, time
+import base64, hashlib, hmac, time
 
 TOLERANCE_SECONDS = 300
 
 
-def verify(raw_body: bytes, webhook_id: str, timestamp: str, header: str) -> bool:
-    secret = os.environ.get("SENT_DM_WEBHOOK_SECRET", "")
+def verify(raw_body: bytes, webhook_id: str, timestamp: str, header: str, secret: str) -> bool:
     if not secret or not header.startswith("v1,"):
         return False
     try:
@@ -121,7 +120,7 @@ async def receive(request: Request, background: BackgroundTasks):
     raw = await request.body()
     if not verify(raw, request.headers.get("x-webhook-id", ""),
                   request.headers.get("x-webhook-timestamp", ""),
-                  request.headers.get("x-webhook-signature", "")):
+                  request.headers.get("x-webhook-signature", ""), signing_secret):
         raise HTTPException(status_code=401, detail="invalid signature")
     background.add_task(process_event, json.loads(raw))
     return {"received": True}
@@ -132,8 +131,7 @@ Django reads `request.body` in the view and must exempt the route from CSRF. Fla
 ## Go
 
 ```go
-func Verify(rawBody []byte, webhookID, timestamp, header string) bool {
-    secret := os.Getenv("SENT_DM_WEBHOOK_SECRET")
+func Verify(rawBody []byte, webhookID, timestamp, header, secret string) bool {
     if secret == "" || !strings.HasPrefix(header, "v1,") {
         return false
     }
@@ -165,7 +163,7 @@ public ResponseEntity<Void> receive(
         @RequestHeader("x-webhook-timestamp") String timestamp,
         @RequestHeader("x-webhook-signature") String signature) throws Exception {
 
-    if (!WebhookSignature.verify(payload, webhookId, timestamp, signature)) {
+    if (!WebhookSignature.verify(payload, webhookId, timestamp, signature, signingSecret)) {
         return ResponseEntity.status(401).build();
     }
     events.submit(payload);                    // @Async executor
@@ -182,7 +180,8 @@ Laravel middleware runs before the controller and reads `$request->getContent()`
 ```php
 public function handle(Request $request, Closure $next)
 {
-    $secret = env('SENT_DM_WEBHOOK_SECRET', '');
+    $secret = $this->signingSecret;  // Injected for this webhook endpoint.
+    if (!$secret) abort(401);
     $signed = $request->header('x-webhook-id') . '.' . $request->header('x-webhook-timestamp') . '.' . $request->getContent();
     $key = base64_decode(preg_replace('/^whsec_/', '', $secret));
     $expected = 'v1,' . base64_encode(hash_hmac('sha256', $signed, $key, true));
@@ -200,10 +199,9 @@ Dispatch a `ShouldQueue` job from the controller. Symfony follows the same patte
 ## Ruby
 
 ```ruby
-def verified?(request)
+def verified?(request, secret)
   raw = request.body.read
   request.body.rewind
-  secret = ENV.fetch("SENT_DM_WEBHOOK_SECRET", "")
   timestamp = request.get_header("HTTP_X_WEBHOOK_TIMESTAMP").to_s
   return false if secret.empty? || (Time.now.to_i - timestamp.to_i).abs > 300
 
@@ -229,7 +227,7 @@ app.MapPost("/webhooks/sent", async (HttpRequest request) =>
             request.Headers["x-webhook-id"],
             request.Headers["x-webhook-timestamp"],
             request.Headers["x-webhook-signature"],
-            Environment.GetEnvironmentVariable("SENT_DM_WEBHOOK_SECRET")))
+            signingSecret))
     {
         return Results.Unauthorized();
     }

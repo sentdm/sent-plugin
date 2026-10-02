@@ -127,6 +127,10 @@ def build(output_root: Path, source_root: Path = ROOT) -> None:
 
     claude_manifest = {
         **common,
+        "documentationUrl": marketplace["website_url"],
+        "supportUrl": marketplace["support_url"],
+        "privacyPolicyUrl": marketplace["privacy_policy_url"],
+        "termsOfServiceUrl": marketplace["terms_of_service_url"],
         "commands": "./.claude/commands",
         "skills": "./skills",
         "mcpServers": "./.mcp.json",

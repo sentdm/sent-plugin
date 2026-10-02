@@ -262,7 +262,21 @@ def invalid_support_url(root: Path) -> None:
                    check=True, capture_output=True, text=True)
 
 
+def ambient_credential_read(root: Path) -> None:
+    path = root / "packages/sent/skills/sent-integration-starter/SKILL.md"
+    with path.open("a") as handle:
+        handle.write('\nclient = Sent(api_key=os.environ.get("SENT_DM_API_KEY"))\n')
+
+
+def missing_claude_privacy_url(root: Path) -> None:
+    path = root / "scripts/generate_adapters.py"
+    path.write_text(path.read_text().replace('        "privacyPolicyUrl": marketplace["privacy_policy_url"],\n', ''))
+    subprocess.run([sys.executable, str(path)], cwd=root, check=True, capture_output=True, text=True)
+
+
 CASES: tuple[tuple[str, Mutation, str], ...] = (
+    ("ambient credential reads", ambient_credential_read, "public gate rejected ambient credential read"),
+    ("Claude privacy policy listing", missing_claude_privacy_url, "Claude privacyPolicyUrl must match"),
     ("independent mutation confirmation policy", disabled_profile_confirmation, "independent safety policy"),
     ("profile confirmation instructions", missing_profile_confirmation_instruction, "must require explicit confirmation"),
     ("portable OpenAI listing", missing_portable_openai_metadata, "portable OpenAI interface must match"),

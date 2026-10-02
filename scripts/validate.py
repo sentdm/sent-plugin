@@ -62,6 +62,11 @@ EXPECTED_TOOLS = set(REPOSITORY_METADATA.tools) if REPOSITORY_METADATA else set(
 MCP_SKILLS = REPOSITORY_METADATA.tools_by_owner if REPOSITORY_METADATA else {}
 MUTATION_TOOLS = REPOSITORY_METADATA.confirmation_tools if REPOSITORY_METADATA else {}
 PUBLIC_FORBIDDEN = {
+    "ambient credential read": re.compile(
+        r"(?:os\.environ\b|os\.getenv\s*\(|process\.env\b|os\.Getenv\s*\("
+        r"|Environment\.GetEnvironmentVariable\s*\(|\$_ENV\s*\[|\bENV(?:\.fetch\s*\(|\s*\[)"
+        r"|\benv\s*\(|\.fromEnv\s*\()"
+    ),
     "Linear URL": re.compile(r"https?://(?:www\.)?linear\.app", re.IGNORECASE),
     "Slack-derived content": re.compile(r"\bSlack(?:-derived| thread| message| channel)?\b", re.IGNORECASE),
     "local macOS path": re.compile(r"/Users/[^\s)`]+"),
@@ -964,6 +969,10 @@ def validate_adapters(validation: Validation) -> None:
     validation.check(claude_manifest.get("skills") == "./skills", "Claude skills path mismatch")
     validation.check(claude_manifest.get("commands") == "./.claude/commands", "Claude command path mismatch")
     validation.check(claude_manifest.get("mcpServers") == "./.mcp.json", "Claude MCP path mismatch")
+    listing = load_json(MARKETPLACE_CONTENT)
+    for field, source in (("documentationUrl", "website_url"), ("supportUrl", "support_url"),
+                          ("privacyPolicyUrl", "privacy_policy_url"), ("termsOfServiceUrl", "terms_of_service_url")):
+        validation.check(claude_manifest.get(field) == listing[source], f"Claude {field} must match canonical listing")
     for required_file in ("README.md", "LICENSE"):
         validation.check(
             (ROOT / "claude-plugins" / "sent" / required_file).is_file(),

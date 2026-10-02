@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Official Sent skills and remote MCP integration for messaging engineering, operations, migration, and specialist channel workflows.",
-    "version": "0.2.0"
+    "version": "0.2.1"
   },
   "plugins": [
     {

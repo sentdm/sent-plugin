@@ -17,13 +17,17 @@ Verify a captured delivery::
         --webhook-id 0f8fad5b-d9cb-469f-a165-70867728950e \
         --timestamp 1767225600 \
         --signature 'v1,Base64Signature==' \
-        --secret-env SENT_DM_WEBHOOK_SECRET
+        --secret-stdin
 
 Sign a synthetic delivery so a local receiver can be exercised::
 
     python3 verify_signature.py --sign --body-file event.json \
         --webhook-id 0f8fad5b-d9cb-469f-a165-70867728950e \
-        --secret-env SENT_DM_WEBHOOK_SECRET
+        --secret-stdin
+
+Supply only the signing secret chosen for this delivery on standard input.
+This utility never reads installer credentials or environment variables and
+makes no network requests. Do not put the secret in arguments or chat prompts.
 
 Exit codes: 0 valid, 1 invalid signature, 2 replay window exceeded,
 3 usage or configuration error.
@@ -36,7 +40,6 @@ import base64
 import hashlib
 import hmac
 import json
-import os
 import sys
 import time
 
@@ -149,12 +152,12 @@ def _self_test() -> int:
 
 
 def _resolve_secret(args: argparse.Namespace) -> str:
-    if args.secret_env:
-        secret = os.environ.get(args.secret_env, "")
-        if not secret:
-            raise ValueError(f"environment variable {args.secret_env} is unset or empty")
-        return secret
-    raise ValueError("provide --secret-env naming the environment variable that holds the signing secret")
+    if not args.secret_stdin:
+        raise ValueError("provide --secret-stdin to supply the signing secret explicitly")
+    secret = sys.stdin.read(4097).strip()
+    if not secret or len(secret) > 4096:
+        raise ValueError("standard input must contain one signing secret of at most 4096 characters")
+    return secret
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -165,7 +168,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--webhook-id", help="value of the x-webhook-id header")
     parser.add_argument("--timestamp", help="value of the x-webhook-timestamp header")
     parser.add_argument("--signature", help="value of the x-webhook-signature header")
-    parser.add_argument("--secret-env", help="environment variable holding the whsec_ signing secret")
+    parser.add_argument("--secret-stdin", action="store_true", help="read only the explicitly supplied signing secret from standard input")
     parser.add_argument(
         "--skip-replay-check",
         action="store_true",
@@ -182,6 +185,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         raw_body = open(args.body_file, "rb").read()
         secret = _resolve_secret(args)
+        decode_secret(secret)
     except (OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return EXIT_USAGE

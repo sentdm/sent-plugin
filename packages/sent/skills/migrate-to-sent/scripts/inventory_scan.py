@@ -57,7 +57,7 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "twilio-sdk", "twilio", r"\b(?:from\s+twilio|require\(['\"]twilio|com\.twilio|Twilio\.Rest|twilio-go)\b",
-        "rewrite", "Replace the Twilio client with a Sent SDK client reading SENT_DM_API_KEY.",
+        "rewrite", "Replace the Twilio client with a Sent SDK client with an explicitly supplied application API key.",
     ),
     Rule(
         "twilio-messages-endpoint", "twilio", r"api\.twilio\.com/2010-04-01/Accounts/[^/]*/Messages",
