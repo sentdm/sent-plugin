@@ -7,6 +7,8 @@ description: Designs Sent Sender Profile architecture for multi-tenant, multi-br
 
 A Sender Profile is the operational boundary for tenant identity, channel configuration, inherited resources, billing, and credentials. Use this skill before provisioning when a poor boundary would mix brands, compliance posture, rate-limit impact, or webhook ownership.
 
+For live MCP profile lifecycle operations use `sent-profile-provisioning`; for market requirements use `sent-compliance`. MCP selects an acting profile with optional `profileId` on ordinary account tools for organization grants only. `sender_profiles.*` tools operate on target `id` and reject acting `profileId`. REST headers below are not MCP arguments.
+
 ## Recommended tenancy model
 
 When tenants require isolation, recommend one Sent organization with one Sender Profile per tenant. A shared profile is appropriate only when the tenants genuinely share one brand, sender resources, compliance posture, billing/rate-limit expectations, and operational blast radius.

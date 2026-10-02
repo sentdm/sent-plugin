@@ -9,9 +9,11 @@ Operate contacts with `contacts.list`, `contacts.get`, `contacts.create_many`, `
 
 ## Establish connection and scope
 
-Use client-managed OAuth 2.1/PKCE. Never request or expose a token, API key, authorization header, client ID, or secret. Before a mutation, surface the active organization and Sender Profile from the connection context; if either is unavailable, use `sent-account-readiness` to inspect the authorized scope. Reauthorize in the client to change scope.
+Use client-managed OAuth 2.1/PKCE. Never request or expose a token, API key, authorization header, client ID, or secret. Before a mutation, surface the active organization and Sender Profile from the connection context; if either is unavailable, use `sent-account-readiness` to inspect the authorized scope.
 
 Mask phone numbers where practical. Return only the contact fields needed for the task, and do not repeat contact data after it has been reviewed. Number presence or messaging history does not establish consent.
+
+An organization grant may select an owned Sender Profile with the tool schema's optional `profileId`; omit it to act as the authenticated account. Validate ownership with `sender_profiles.list` or `sender_profiles.get`, and use the same selector for preflight reads, mutations, and follow-up reads. Profile grants cannot use this selector. Reauthorize for a different organization or a profile outside the grant. Never invent scope fields or request credentials.
 
 ## Read contacts
 

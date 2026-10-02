@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 import yaml
 from jsonschema import Draft202012Validator
 
-from repository_metadata import MetadataError, load_repository_metadata
+from repository_metadata import MetadataError, load_repository_metadata, openai_interface
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -204,6 +204,10 @@ def validate_manifests(validation: Validation) -> None:
         validation.check(urlparse(value).scheme == "https", f"plugin {field} must use HTTPS")
     if MARKETPLACE_CONTENT.is_file():
         marketplace = load_json(MARKETPLACE_CONTENT)
+        validation.check(
+            plugin.get("extensions", {}).get("com.openai", {}).get("interface") == openai_interface(marketplace),
+            "portable OpenAI interface must match canonical marketplace metadata",
+        )
         validation.check(
             plugin.get("homepage") == marketplace.get("website_url"),
             "portable plugin homepage must match canonical marketplace website_url",
@@ -498,6 +502,7 @@ def validate_marketplace_content(validation: Validation) -> None:
         "category",
         "capabilities",
         "website_url",
+        "support_url",
         "privacy_policy_url",
         "terms_of_service_url",
         "default_prompts",
@@ -904,10 +909,16 @@ def validate_adapters(validation: Validation) -> None:
     if isinstance(prompts, list):
         validation.check(all(isinstance(prompt, str) and len(prompt) <= 128 and "\n" not in prompt for prompt in prompts), "Codex starter prompts must be one line and at most 128 characters")
 
-    required_urls = ("websiteURL", "privacyPolicyURL", "termsOfServiceURL")
+    required_urls = ("websiteURL", "supportURL", "privacyPolicyURL", "termsOfServiceURL")
     for field in required_urls:
         value = interface.get(field, "")
-        validation.check(urlparse(value).scheme == "https" and len(value) <= 1024, f"Codex {field} must be an HTTPS URL within final directory limits")
+        try:
+            parsed = urlparse(value) if isinstance(value, str) else None
+            valid = bool(parsed and parsed.scheme == "https" and parsed.hostname
+                         and not parsed.username and not parsed.password and len(value) <= 1024)
+        except ValueError:
+            valid = False
+        validation.check(valid, f"Codex {field} must be an HTTPS URL within final directory limits")
 
     for field in ("logo", "composerIcon"):
         relative = interface.get(field, "")

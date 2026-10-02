@@ -36,6 +36,8 @@ Install only the focused skills needed by a project by repeating `--skill <name>
 | `sent-templates` | List, find, inspect, or delete existing templates | [`skills/sent-templates/SKILL.md`](skills/sent-templates/SKILL.md) |
 | `sent-analytics` | Query aggregate volume, deliverability, contact metrics, and number capabilities | [`skills/sent-analytics/SKILL.md`](skills/sent-analytics/SKILL.md) |
 | `sent-account-readiness` | Check the authorized account, balance, onboarding/KYC status, and selected scope | [`skills/sent-account-readiness/SKILL.md`](skills/sent-account-readiness/SKILL.md) |
+| `sent-feedback` | Report user-authorized feedback about Sent tools | [`skills/sent-feedback/SKILL.md`](skills/sent-feedback/SKILL.md) |
+| `sent-compliance` | Inspect live SMS market requirements and setup plans | [`skills/sent-compliance/SKILL.md`](skills/sent-compliance/SKILL.md) |
 | `messaging-performance-analyzer` | Diagnose MDR/message-activity funnels, delivery failures, error clusters, and fallback | [`skills/messaging-performance-analyzer/SKILL.md`](skills/messaging-performance-analyzer/SKILL.md) |
 | `sms-10dlc-registration` | Prepare US A2P 10DLC brand, campaign, TCR, opt-in, and remediation evidence | [`skills/sms-10dlc-registration/SKILL.md`](skills/sms-10dlc-registration/SKILL.md) |
 | `waba-embedded-signup` | Connect a WABA and verify phone-number, Sender Profile, token, and webhook readiness | [`skills/waba-embedded-signup/SKILL.md`](skills/waba-embedded-signup/SKILL.md) |
@@ -47,7 +49,7 @@ Install only the focused skills needed by a project by repeating `--skill <name>
 | `sent-webhook-engineer` | Build and debug verified webhook receivers and delivery health | [`skills/sent-webhook-engineer/SKILL.md`](skills/sent-webhook-engineer/SKILL.md) |
 | `sent-routing-strategist` | Choose channels and diagnose route attempts and delivery outcomes | [`skills/sent-routing-strategist/SKILL.md`](skills/sent-routing-strategist/SKILL.md) |
 | `sent-two-way-messaging` | Design inbound, consent, and conversational flows | [`skills/sent-two-way-messaging/SKILL.md`](skills/sent-two-way-messaging/SKILL.md) |
-| `sent-profile-provisioning` | Execute the Sender Profile, campaign, and user lifecycle | [`skills/sent-profile-provisioning/SKILL.md`](skills/sent-profile-provisioning/SKILL.md) |
+| `sent-profile-provisioning` | Manage live Sender Profiles; guide REST campaigns and users | [`skills/sent-profile-provisioning/SKILL.md`](skills/sent-profile-provisioning/SKILL.md) |
 | `migrate-to-sent` | Migrate from another CPaaS provider onto Sent | [`skills/migrate-to-sent/SKILL.md`](skills/migrate-to-sent/SKILL.md) |
 
 Each `SKILL.md` contains the discovery metadata and core workflow. Skill-local `references/` hold deeper specifications and examples, `scripts/` hold deterministic validators or analyzers, and `agents/openai.yaml` supplies optional host UI metadata.
@@ -63,6 +65,9 @@ The package declares `https://mcp.sent.dm/mcp` as a Streamable HTTP server.
 | Templates | `templates.list`, `templates.get`, `templates.get_by_name`, `templates.delete` |
 | Lookup and analytics | `numbers.lookup`, `dashboard.messages_sent`, `dashboard.deliverability`, `dashboard.contacts` |
 | Account | `account.get`, `balance.get`, `onboarding.status` |
+| Feedback | `feedback.send` |
+| Sender Profiles | `sender_profiles.list`, `sender_profiles.get`, `sender_profiles.create`, `sender_profiles.update`, `sender_profiles.delete` |
+| SMS compliance | `compliance.requirements`, `compliance.setup_plan` |
 
 Use `sent-analytics` for aggregate dashboard totals and trends. Use `messaging-performance-analyzer` for message-level evidence, funnel drop-off, and root-cause diagnosis. Use `sent-templates` for existing records, `waba-template-author` for WhatsApp content, and `template-builder-ui` for product UX.
 
@@ -72,7 +77,7 @@ For engineering work, use `sent-integration-starter` for new integrations, `sent
 
 Authorization is client-managed. The MCP client performs OAuth 2.1 with PKCE and Dynamic Client Registration; the package contains no token, API key, authorization header, OAuth client ID, or credential placeholder.
 
-The grant is tied to the organization and Sender Profile selected during authorization. Reauthorize to change that scope. Revoke access from **Sent Dashboard → Settings → MCP Connections** when the connection is no longer needed. Never ask a user to paste credentials into a prompt.
+The grant is tied to the organization and Sender Profile selected during authorization. An organization grant can use a schema-supported `profileId` to act as an owned profile; profile grants cannot. `sender_profiles.*` uses target `id` and rejects acting `profileId`. Reauthorize for another organization or scope outside the grant. Revoke access from **Sent Dashboard → Settings → MCP Connections** when the connection is no longer needed. Never ask a user to paste credentials into a prompt.
 
 ## Mutation and privacy contract
 
@@ -100,3 +105,17 @@ python3 scripts/test_live_contract.py
 For current product and API behavior, use the [Sent MCP documentation](https://docs.sent.dm/start/llm-docs/mcp-server), the [machine-readable documentation index](https://docs.sent.dm/llms.txt), and the [Sent API reference](https://docs.sent.dm/reference/api).
 
 Live network checks are isolated from pull-request validation. The scheduled/manual/release freshness workflow compares normalized facts from the source catalog, classifies drift separately from source failures, and uploads a JSON diagnostic artifact.
+
+## Additional MCP behavior
+
+The public MCP surface includes 27 tools. `messages.send` uses an existing template with all required parameters; it supports `scheduledAt` with an explicit timezone offset, from 1 minute to 30 days ahead. Acceptance is not delivery, and quiet hours can defer release.
+
+Feedback goes to Sent staff only with user authorization and a reviewed, sanitized report. It is limited to 2000 characters and 20 calls per authenticated account scope per UTC day, shared across acting profiles. Its note does not guarantee storage, open a support ticket, or promise a response. Number lookup is paid and limited to 1000 calls per authenticated account scope per UTC day.
+
+Profile create and delete require `idempotencyKey`; interrupted outcomes require reconciliation before another operation. MCP update changes only name, short name, or description. Compliance setup plans create a new profile, support SMS only, and hand required document uploads to the dashboard or REST API.
+
+Dashboard volume counts delivered/read outbound SMS and WhatsApp over supported windows; deliverability is an all-time outbound percentage including SENT, and contacts is a current total. Do not claim unsupported date filters or trends.
+
+Use the connected server's tool schemas for argument names and availability. The [public MCP landing page](https://mcp.sent.dm) lists the current surface; some documentation pages may describe an earlier catalog.
+
+The bundled migration inventory scanner reads local regular files in the selected repository and makes no network requests. It skips symbolic links and environment files and omits source excerpts from reports. Other bundled utilities validate supplied local payloads or analyze supplied local exports. Remote account reads and authorized writes use the declared Sent MCP endpoint.

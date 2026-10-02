@@ -57,7 +57,11 @@
       "id": "templates",
       "url": "https://docs.sent.dm/llms/reference/api/template-definition.txt",
       "kind": "documentation",
-      "affected_skills": ["sent-templates", "template-builder-ui", "waba-template-author"],
+      "affected_skills": [
+        "sent-templates",
+        "template-builder-ui",
+        "waba-template-author"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -134,7 +138,10 @@
       "id": "waba",
       "url": "https://docs.sent.dm/llms/start/guides/connect-whatsapp.txt",
       "kind": "documentation",
-      "affected_skills": ["waba-embedded-signup", "waba-template-author"],
+      "affected_skills": [
+        "waba-embedded-signup",
+        "waba-template-author"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -183,7 +190,10 @@
       "id": "sdks",
       "url": "https://docs.sent.dm/llms/sdks.txt",
       "kind": "documentation",
-      "affected_skills": ["migrate-to-sent", "sent-integration-starter"],
+      "affected_skills": [
+        "migrate-to-sent",
+        "sent-integration-starter"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -234,7 +244,10 @@
       "id": "per-request-credentials",
       "url": "https://docs.sent.dm/llms/build/per-request-credentials.txt",
       "kind": "documentation",
-      "affected_skills": ["sent-integration-starter", "sent-profile-provisioning"],
+      "affected_skills": [
+        "sent-integration-starter",
+        "sent-profile-provisioning"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -255,7 +268,11 @@
       "id": "idempotency",
       "url": "https://docs.sent.dm/llms/reference/api/idempotency.txt",
       "kind": "documentation",
-      "affected_skills": ["migrate-to-sent", "sent-integration-starter", "sent-profile-provisioning"],
+      "affected_skills": [
+        "migrate-to-sent",
+        "sent-integration-starter",
+        "sent-profile-provisioning"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -276,7 +293,11 @@
       "id": "webhook-signatures",
       "url": "https://docs.sent.dm/llms/build/signature-verification.txt",
       "kind": "documentation",
-      "affected_skills": ["migrate-to-sent", "sent-integration-starter", "sent-webhook-engineer"],
+      "affected_skills": [
+        "migrate-to-sent",
+        "sent-integration-starter",
+        "sent-webhook-engineer"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -297,7 +318,11 @@
       "id": "webhook-receiver",
       "url": "https://docs.sent.dm/llms/build/webhook-receiver.txt",
       "kind": "documentation",
-      "affected_skills": ["sent-integration-starter", "sent-two-way-messaging", "sent-webhook-engineer"],
+      "affected_skills": [
+        "sent-integration-starter",
+        "sent-two-way-messaging",
+        "sent-webhook-engineer"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -318,7 +343,10 @@
       "id": "two-way-messaging",
       "url": "https://docs.sent.dm/llms/reference/two-way-messaging.txt",
       "kind": "documentation",
-      "affected_skills": ["migrate-to-sent", "sent-two-way-messaging"],
+      "affected_skills": [
+        "migrate-to-sent",
+        "sent-two-way-messaging"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -339,7 +367,11 @@
       "id": "profile-provisioning",
       "url": "https://docs.sent.dm/llms/start/advanced/sub-account-profiles-api.txt",
       "kind": "documentation",
-      "affected_skills": ["migrate-to-sent", "sent-profile-provisioning", "sender-profile-architect"],
+      "affected_skills": [
+        "migrate-to-sent",
+        "sent-profile-provisioning",
+        "sender-profile-architect"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -360,7 +392,9 @@
       "id": "10dlc",
       "url": "https://docs.sent.dm/llms/start/advanced/10dlc-registration.txt",
       "kind": "documentation",
-      "affected_skills": ["sms-10dlc-registration"],
+      "affected_skills": [
+        "sms-10dlc-registration"
+      ],
       "last_verified": "2026-08-09",
       "checks": [
         {
@@ -373,6 +407,69 @@
           "fact": "10dlc.opt_in_consent",
           "extractor": "contains",
           "pattern": "consent",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "mcp-catalog",
+      "url": "https://mcp.sent.dm",
+      "kind": "documentation",
+      "affected_skills": [
+        "sent",
+        "sent-feedback",
+        "sent-compliance",
+        "sent-profile-provisioning",
+        "sent-account-readiness"
+      ],
+      "last_verified": "2026-10-02",
+      "checks": [
+        {
+          "fact": "mcp.catalog.compliance.requirements.listed",
+          "extractor": "contains",
+          "pattern": "<code>compliance.requirements</code>",
+          "expected": true
+        },
+        {
+          "fact": "mcp.catalog.compliance.setup_plan.listed",
+          "extractor": "contains",
+          "pattern": "<code>compliance.setup_plan</code>",
+          "expected": true
+        },
+        {
+          "fact": "mcp.catalog.feedback.send.listed",
+          "extractor": "contains",
+          "pattern": "<code>feedback.send</code>",
+          "expected": true
+        },
+        {
+          "fact": "mcp.catalog.sender_profiles.create.listed",
+          "extractor": "contains",
+          "pattern": "<code>sender_profiles.create</code>",
+          "expected": true
+        },
+        {
+          "fact": "mcp.catalog.sender_profiles.delete.listed",
+          "extractor": "contains",
+          "pattern": "<code>sender_profiles.delete</code>",
+          "expected": true
+        },
+        {
+          "fact": "mcp.catalog.sender_profiles.get.listed",
+          "extractor": "contains",
+          "pattern": "<code>sender_profiles.get</code>",
+          "expected": true
+        },
+        {
+          "fact": "mcp.catalog.sender_profiles.list.listed",
+          "extractor": "contains",
+          "pattern": "<code>sender_profiles.list</code>",
+          "expected": true
+        },
+        {
+          "fact": "mcp.catalog.sender_profiles.update.listed",
+          "extractor": "contains",
+          "pattern": "<code>sender_profiles.update</code>",
           "expected": true
         }
       ]

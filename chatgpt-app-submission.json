@@ -4,7 +4,7 @@
   "app_info": {
     "display_name": "Sent",
     "subtitle": "Business messaging workflows",
-    "description": "Connect your Sent account to send and track SMS and WhatsApp messages, manage contacts and templates, look up phone-number network details, and review account readiness, balance, and messaging analytics.",
+    "description": "Connect your Sent account to send, schedule, and track SMS, WhatsApp, and RCS messages, manage contacts, templates, and Sender Profiles, inspect SMS compliance requirements, report authorized feedback, and review account readiness and messaging analytics.",
     "category": "BUSINESS"
   },
   "tools": {
@@ -234,6 +234,102 @@
         "read_only_justification": "Retrieves the latest customer onboarding state without advancing or modifying onboarding.",
         "open_world_justification": "Reads private onboarding data from Sent without submitting information to an external party.",
         "destructive_justification": "Does not approve, reject, submit, delete, or otherwise change onboarding data."
+      }
+    },
+    "feedback.send": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Stores user-authorized feedback for Sent staff.",
+        "open_world_justification": "Reports only within Sent; does not publish feedback externally.",
+        "destructive_justification": "Does not delete data or send recipient messages; feedback is non-idempotent."
+      }
+    },
+    "compliance.requirements": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads market requirements without registering a sender.",
+        "open_world_justification": "Returns Sent-published market data without contacting registries.",
+        "destructive_justification": "Does not create or alter compliance registrations."
+      }
+    },
+    "compliance.setup_plan": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Computes a proposed setup call without executing it.",
+        "open_world_justification": "Uses published market requirements without contacting registries.",
+        "destructive_justification": "Does not provision a profile or change existing registrations."
+      }
+    },
+    "sender_profiles.list": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads the calling organization's owned profiles.",
+        "open_world_justification": "Reads private Sent data only.",
+        "destructive_justification": "Does not modify profiles or routes."
+      }
+    },
+    "sender_profiles.get": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads one owned profile and its channel readiness.",
+        "open_world_justification": "Reads private Sent data only.",
+        "destructive_justification": "Does not modify profiles or routes."
+      }
+    },
+    "sender_profiles.create": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates an owned profile and may provision an SMS sender.",
+        "open_world_justification": "Provisioning may contact carriers and registration services.",
+        "destructive_justification": "Creates resources without deleting existing profiles; may incur fees."
+      }
+    },
+    "sender_profiles.update": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Changes profile identity fields supplied by the operator.",
+        "open_world_justification": "Updates private Sent profile data only.",
+        "destructive_justification": "Does not delete the profile or tear down messaging routes."
+      }
+    },
+    "sender_profiles.delete": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Soft-deletes a profile and tears down its messaging configuration.",
+        "open_world_justification": "Can disconnect WhatsApp and release external carrier numbers.",
+        "destructive_justification": "Can remove live routing and messaging capability."
       }
     }
   },

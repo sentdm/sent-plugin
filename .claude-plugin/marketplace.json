@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "Official Sent skills and remote MCP integration for messaging engineering, operations, migration, and specialist channel workflows.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
       "name": "sent",
       "source": "./claude-plugins/sent",
-      "description": "Official Sent business messaging plugin for SMS, WhatsApp, RCS, API integration, webhooks, routing, two-way messaging, Sender Profiles, migration, compliance, analytics, and agent-safe operations.",
+      "description": "Official Sent plugin for SMS, WhatsApp, RCS, scheduled template sends, Sender Profiles, SMS compliance, authorized feedback, contacts, analytics, API integration, webhooks, routing, and migration.",
       "category": "Productivity"
     }
   ]

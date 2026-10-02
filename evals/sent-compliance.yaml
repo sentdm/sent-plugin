@@ -1,0 +1,20 @@
+skill: sent-compliance
+cases:
+- query: What fields and documents are required for a US toll-free SMS sender?
+  expect: trigger
+  rationale: Live market requirements map to compliance.requirements.
+- query: Show the exact MCP setup call for an alphanumeric SMS sender in GB.
+  expect: trigger
+  rationale: Market setup plan maps to compliance.setup_plan.
+- query: The plan requires documents; can MCP upload them?
+  expect: trigger
+  rationale: Required uploads block this transport and require a handoff.
+- query: Connect our WhatsApp Business Account through Embedded Signup.
+  expect: no_trigger
+  rationale: WhatsApp has its own onboarding outside SMS compliance.
+- query: Draft opt-in language and sample messages for our 10DLC campaign.
+  expect: no_trigger
+  rationale: Campaign content belongs to sms-10dlc-registration.
+- query: Check market requirements and create an SMS Sender Profile.
+  expect: ambiguous
+  rationale: Inspect requirements here and hand the approved payload to sent-profile-provisioning.

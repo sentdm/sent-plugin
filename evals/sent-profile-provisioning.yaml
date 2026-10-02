@@ -27,3 +27,18 @@ cases:
   - query: "We need per-tenant WhatsApp numbers onboarded for 20 merchants."
     expect: ambiguous
     rationale: Profile creation with dedicated WABA credentials lives here, but the Embedded Signup onboarding flow itself belongs to waba-embedded-signup.
+  - query: List our owned Sender Profiles with channel readiness.
+    expect: trigger
+    rationale: Live MCP profile discovery.
+  - query: Create a GB alphanumeric Sender Profile using the compliance setup plan.
+    expect: trigger
+    rationale: Live creation after requirements and confirmation.
+  - query: Clear only the description of this Sender Profile.
+    expect: trigger
+    rationale: Explicit null differs from omitted update fields.
+  - query: Delete this profile and release its numbers after showing the impact.
+    expect: trigger
+    rationale: Destructive lifecycle tool with required idempotency key.
+  - query: The profile create timed out; retry it with a new key.
+    expect: trigger
+    rationale: Reconcile the existing receipt and keep the original operation key.

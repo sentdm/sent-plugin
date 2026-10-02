@@ -11,6 +11,16 @@
       "mutation": "read_only",
       "confirmation_required": false
     },
+    "compliance.requirements": {
+      "owner": "sent-compliance",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "compliance.setup_plan": {
+      "owner": "sent-compliance",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
     "contacts.create_many": {
       "owner": "sent-contacts",
       "mutation": "state_changing",
@@ -51,6 +61,11 @@
       "mutation": "read_only",
       "confirmation_required": false
     },
+    "feedback.send": {
+      "owner": "sent-feedback",
+      "mutation": "state_changing",
+      "confirmation_required": true
+    },
     "messages.activities.list": {
       "owner": "sent-messaging",
       "mutation": "read_only",
@@ -75,6 +90,31 @@
       "owner": "sent-account-readiness",
       "mutation": "read_only",
       "confirmation_required": false
+    },
+    "sender_profiles.create": {
+      "owner": "sent-profile-provisioning",
+      "mutation": "state_changing",
+      "confirmation_required": true
+    },
+    "sender_profiles.delete": {
+      "owner": "sent-profile-provisioning",
+      "mutation": "destructive",
+      "confirmation_required": true
+    },
+    "sender_profiles.get": {
+      "owner": "sent-profile-provisioning",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "sender_profiles.list": {
+      "owner": "sent-profile-provisioning",
+      "mutation": "read_only",
+      "confirmation_required": false
+    },
+    "sender_profiles.update": {
+      "owner": "sent-profile-provisioning",
+      "mutation": "state_changing",
+      "confirmation_required": true
     },
     "templates.delete": {
       "owner": "sent-templates",

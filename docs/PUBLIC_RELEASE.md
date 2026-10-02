@@ -31,7 +31,7 @@ CI must pass on the exact commit being submitted. Resolve warnings as well as er
 - Verify the homepage, documentation, privacy, terms, support, and MCP URLs are publicly reachable over HTTPS.
 - Confirm the README accurately describes installation, authentication, data handling, mutation confirmation, and support.
 - Confirm every public skill appears in each README catalog with a task-oriented description and a working `skills/<name>/SKILL.md` link.
-- Run `npx skills add https://github.com/sentdm/sent-plugin --list` against the public release and confirm all thirteen skills are discoverable by name.
+- Run `npx skills add https://github.com/sentdm/sent-plugin --list` against the public release and confirm all canonical skills are discoverable by name.
 - Review every `SKILL.md` frontmatter description for natural-language triggers, product synonyms, error symptoms, and explicit scope boundaries.
 - Confirm all fixtures are synthetic and all external documentation links are public.
 - Confirm license and provenance notices remain present in the repository and distributable plugin.
@@ -40,3 +40,5 @@ CI must pass on the exact commit being submitted. Resolve warnings as well as er
 ## Anthropic submission
 
 Submit the public repository through the current Claude plugin submission form only after the exact public commit passes the gates above. Anthropic runs `claude plugin validate` and automated safety screening during review, so local strict validation should match the submitted layout.
+
+OpenAI listings include website, support, privacy policy, and terms URLs in both the portable extension and Codex adapter. Release validation checks their consistency and HTTPS endpoints. Confirmation requirements for sends, feedback, contact mutations, template deletion, and Sender Profile mutations are enforced independently of public-surface metadata. Scanner regression checks cover credential omission and repository containment.

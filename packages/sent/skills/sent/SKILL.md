@@ -31,11 +31,14 @@ Do **not** use when:
 
 | User intent | Target skill |
 |---|---|
-| Preview or send a templated message; inspect one message and its activity | `sent-messaging` |
+| Preview, send, or schedule an existing templated message; inspect one message and its activity | `sent-messaging` |
 | List, inspect, create, summarize, or delete Sent contacts | `sent-contacts` |
 | Find, inspect, or delete existing Sent templates | `sent-templates` |
 | Query dashboard messaging metrics or look up number capabilities | `sent-analytics` |
 | Check the selected account, balance, onboarding state, or readiness to send | `sent-account-readiness` |
+| Report a bug, missing feature, confusing result, or praise to Sent with user authorization | `sent-feedback` |
+| Inspect SMS market fields, document requirements, or an exact setup call | `sent-compliance` |
+| List, get, create, update, or delete owned Sender Profiles through MCP | `sent-profile-provisioning` |
 
 ### Specialist guidance
 

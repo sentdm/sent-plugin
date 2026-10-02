@@ -53,6 +53,36 @@ class ValidatorManifestContractTests(unittest.TestCase):
 
 
 class RepositoryMetadataContractTests(unittest.TestCase):
+    def test_confirmation_policy_cannot_be_downgraded(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            shutil.copytree(ROOT / "packages", root / "packages")
+            path = root / "packages" / "sent" / "public-surface.json"
+            original = json.loads(path.read_text())
+            for tool in REPOSITORY_METADATA.REQUIRED_CONFIRMATION_TOOLS:
+                for downgrade in ("confirmation", "read_only", "remove", "owner"):
+                    with self.subTest(tool=tool, downgrade=downgrade):
+                        surface = json.loads(json.dumps(original))
+                        entry = surface["tools"][tool]
+                        if downgrade == "remove":
+                            del surface["tools"][tool]
+                        elif downgrade == "owner":
+                            entry["owner"] = "sent"
+                        else:
+                            entry["confirmation_required"] = False
+                            if downgrade == "read_only":
+                                entry["mutation"] = "read_only"
+                        path.write_text(json.dumps(surface))
+                        with self.assertRaisesRegex(REPOSITORY_METADATA.MetadataError, "independent safety policy"):
+                            REPOSITORY_METADATA.load_repository_metadata(root)
+
+    def test_portable_and_codex_openai_listing_match(self) -> None:
+        portable = json.loads((ROOT / "packages/sent/plugin.json").read_text())["extensions"]["com.openai"]["interface"]
+        codex = json.loads((ROOT / "plugins/sent/.codex-plugin/plugin.json").read_text())["interface"]
+        self.assertEqual(portable, codex)
+        for field in ("websiteURL", "supportURL", "privacyPolicyURL", "termsOfServiceURL"):
+            self.assertTrue(portable[field].startswith("https://"))
+
     def test_public_surface_matches_skills_and_openai_submission(self) -> None:
         metadata = REPOSITORY_METADATA.load_repository_metadata(ROOT)
         submission = json.loads((ROOT / "chatgpt-app-submission.json").read_text(encoding="utf-8"))
@@ -133,6 +163,7 @@ class DocumentationSourceContractTests(unittest.TestCase):
             set(sources),
             {
                 "llms-index",
+                "mcp-catalog",
                 "openapi",
                 "templates",
                 "webhooks",

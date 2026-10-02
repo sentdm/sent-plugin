@@ -15,3 +15,9 @@ cases:
   - query: "Our delivery rate fell yesterday; investigate and send a corrected test message."
     expect: ambiguous
     rationale: Aggregate diagnosis belongs to messaging-performance-analyzer, while the eventual direct send belongs here after the cause and payload are resolved.
+  - query: Schedule this existing template for tomorrow at 9 AM America/New_York.
+    expect: trigger
+    rationale: Resolve scheduledAt with explicit offset and confirm payload.
+  - query: Send free-form text without any existing template.
+    expect: trigger
+    rationale: Explain template-only sends and find a real template before execution.

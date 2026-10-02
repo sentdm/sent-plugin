@@ -1,7 +1,7 @@
 {
   "name": "sent",
-  "version": "0.1.0",
-  "description": "Official Sent business messaging plugin for SMS, WhatsApp, RCS, API integration, webhooks, routing, two-way messaging, Sender Profiles, migration, compliance, analytics, and agent-safe operations.",
+  "version": "0.2.0",
+  "description": "Official Sent plugin for SMS, WhatsApp, RCS, scheduled template sends, Sender Profiles, SMS compliance, authorized feedback, contacts, analytics, API integration, webhooks, routing, and migration.",
   "author": {
     "name": "Sent",
     "url": "https://sent.dm"
@@ -32,7 +32,9 @@
     "routing",
     "two-way-messaging",
     "migration",
-    "mcp"
+    "mcp",
+    "feedback",
+    "scheduled-messaging"
   ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
@@ -47,14 +49,15 @@
       "Write"
     ],
     "websiteURL": "https://github.com/sentdm/sent-plugin#readme",
+    "supportURL": "https://www.sent.dm/en/company/contact-support",
     "privacyPolicyURL": "https://www.sent.dm/en/legal/privacy-policy",
     "termsOfServiceURL": "https://www.sent.dm/en/legal/terms-of-service",
-    "logo": "./assets/logo.svg",
-    "composerIcon": "./assets/logo.svg",
     "defaultPrompt": [
       "Use $sent-integration-starter to review how this application should integrate Sent safely.",
       "Use $sent-routing-strategist to explain the safest channel and reroute policy for this workflow.",
       "Use $migrate-to-sent to plan a staged migration from our current messaging provider."
-    ]
+    ],
+    "logo": "./assets/logo.svg",
+    "composerIcon": "./assets/logo.svg"
   }
 }

@@ -4,7 +4,10 @@
   "long_description": "Use Sent MCP operations for safe account, contact, template, analytics, and messaging workflows. Focused specialist skills add API integration, webhook engineering, contact-aware routing, two-way messaging, Sender Profile architecture and provisioning, CPaaS migration, delivery diagnosis, US A2P 10DLC, WhatsApp Business, RCS launch readiness, and cross-channel template design.",
   "developer_name": "Sent",
   "category": "Productivity",
-  "capabilities": ["Interactive", "Write"],
+  "capabilities": [
+    "Interactive",
+    "Write"
+  ],
   "website_url": "https://github.com/sentdm/sent-plugin#readme",
   "privacy_policy_url": "https://www.sent.dm/en/legal/privacy-policy",
   "terms_of_service_url": "https://www.sent.dm/en/legal/terms-of-service",
@@ -13,5 +16,6 @@
     "Use $sent-routing-strategist to explain the safest channel and reroute policy for this workflow.",
     "Use $migrate-to-sent to plan a staged migration from our current messaging provider."
   ],
-  "marketplace_description": "Official Sent skills and remote MCP integration for messaging engineering, operations, migration, and specialist channel workflows."
+  "marketplace_description": "Official Sent skills and remote MCP integration for messaging engineering, operations, migration, and specialist channel workflows.",
+  "support_url": "https://www.sent.dm/en/company/contact-support"
 }

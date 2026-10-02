@@ -21,3 +21,9 @@ cases:
   - query: "A customer's Sent traffic is failing; check account readiness, then tell me what delivery evidence to inspect."
     expect: ambiguous
     rationale: The request spans live account readiness and delivery diagnosis, so the dispatcher should order the public readiness and performance-analysis skills.
+  - query: 'Help me with Sent: check compliance, create a profile, and schedule a template.'
+    expect: trigger
+    rationale: Multi-workflow routing begins with account and market prerequisites.
+  - query: Send this reviewed bug report to Sent.
+    expect: no_trigger
+    rationale: One clear operation routes directly to sent-feedback.

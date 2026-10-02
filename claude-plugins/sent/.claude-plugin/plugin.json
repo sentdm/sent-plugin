@@ -1,7 +1,7 @@
 {
   "name": "sent",
-  "version": "0.1.0",
-  "description": "Official Sent business messaging plugin for SMS, WhatsApp, RCS, API integration, webhooks, routing, two-way messaging, Sender Profiles, migration, compliance, analytics, and agent-safe operations.",
+  "version": "0.2.0",
+  "description": "Official Sent plugin for SMS, WhatsApp, RCS, scheduled template sends, Sender Profiles, SMS compliance, authorized feedback, contacts, analytics, API integration, webhooks, routing, and migration.",
   "author": {
     "name": "Sent",
     "url": "https://sent.dm"
@@ -32,7 +32,9 @@
     "routing",
     "two-way-messaging",
     "migration",
-    "mcp"
+    "mcp",
+    "feedback",
+    "scheduled-messaging"
   ],
   "commands": "./.claude/commands",
   "skills": "./skills",

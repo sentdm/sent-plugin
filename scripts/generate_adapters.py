@@ -10,7 +10,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from repository_metadata import load_repository_metadata
+from repository_metadata import load_repository_metadata, openai_interface
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -112,20 +112,7 @@ def build(output_root: Path, source_root: Path = ROOT) -> None:
         **common,
         "skills": "./skills/",
         "mcpServers": "./.mcp.json",
-        "interface": {
-            "displayName": marketplace["display_name"],
-            "shortDescription": marketplace["short_description"],
-            "longDescription": marketplace["long_description"],
-            "developerName": marketplace["developer_name"],
-            "category": marketplace["category"],
-            "capabilities": marketplace["capabilities"],
-            "websiteURL": marketplace["website_url"],
-            "privacyPolicyURL": marketplace["privacy_policy_url"],
-            "termsOfServiceURL": marketplace["terms_of_service_url"],
-            "logo": "./assets/logo.svg",
-            "composerIcon": "./assets/logo.svg",
-            "defaultPrompt": marketplace["default_prompts"],
-        },
+        "interface": openai_interface(marketplace),
     }
     adapter_mcp = {
         "mcpServers": {

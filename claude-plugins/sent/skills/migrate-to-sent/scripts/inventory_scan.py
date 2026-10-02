@@ -19,8 +19,10 @@ import argparse
 import json
 import os
 import re
+import stat
 import sys
 from dataclasses import dataclass, asdict
+from pathlib import Path
 
 EXIT_CLEAN = 0
 EXIT_FINDINGS = 1
@@ -144,18 +146,12 @@ class Finding:
 
 
 def redact_excerpt(line: str) -> str:
-    """Mask credential-like literals before reporting a matched source line."""
-    line = re.sub(
-        r"(?i)(authorization[^\n]{0,24}bearer\s+)([^\s'\",;}]+)",
-        r"\1<redacted>",
-        line,
-    )
-    line = re.sub(
-        r"(?i)\b(api[_-]?key|auth[_-]?token|access[_-]?token|secret|password)(\s*[:=]\s*)([^\s,;}]+)",
-        r"\1\2<redacted>",
-        line,
-    )
-    return line
+    """Omit source text: credentials cannot reliably be identified by a regex.
+
+    Retain this helper and the excerpt field for existing report consumers.
+    Paths, line numbers, rule names, and guidance still locate every finding.
+    """
+    return "[source omitted]"
 
 
 def scan_text(text: str, path: str = "<memory>") -> list[Finding]:
@@ -181,25 +177,40 @@ def scan_text(text: str, path: str = "<memory>") -> list[Finding]:
 
 
 def scan_path(root: str) -> list[Finding]:
-    """Walk a directory tree and scan eligible files."""
+    """Scan regular files inside the selected root, never file/directory links."""
+    scan_root = Path(root).resolve(strict=True)
     findings: list[Finding] = []
-    for directory, subdirs, files in os.walk(root):
-        subdirs[:] = [name for name in subdirs if name not in SKIP_DIRS and not name.startswith(".")]
+    for directory, subdirs, files in os.walk(scan_root, followlinks=False):
+        subdirs[:] = [
+            name for name in subdirs
+            if name not in SKIP_DIRS and not name.startswith(".")
+            and not (Path(directory) / name).is_symlink()
+        ]
         for filename in files:
             if filename.startswith(".env"):
                 continue
             extension = os.path.splitext(filename)[1].lower()
             if extension not in SCAN_EXTENSIONS:
                 continue
-            full = os.path.join(directory, filename)
+            full = Path(directory) / filename
             try:
-                if os.path.getsize(full) > MAX_FILE_BYTES:
+                if full.is_symlink() or not full.resolve(strict=True).is_relative_to(scan_root):
                     continue
-                with open(full, encoding="utf-8", errors="replace") as handle:
-                    text = handle.read()
-            except OSError:
+                # Refuse a last-component link swapped in after the check, and
+                # avoid blocking on a named pipe disguised as a source file.
+                flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+                descriptor = os.open(full, flags)
+                with os.fdopen(descriptor, "rb") as handle:
+                    info = os.fstat(handle.fileno())
+                    if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_FILE_BYTES:
+                        continue
+                    data = handle.read(MAX_FILE_BYTES + 1)
+                if len(data) > MAX_FILE_BYTES:
+                    continue
+                text = data.decode("utf-8", errors="replace")
+            except (OSError, RuntimeError):
                 continue
-            findings.extend(scan_text(text, os.path.relpath(full, root)))
+            findings.extend(scan_text(text, str(full.relative_to(scan_root))))
     return findings
 
 
