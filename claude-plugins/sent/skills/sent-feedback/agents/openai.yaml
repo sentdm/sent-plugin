@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sent Feedback"
+  short_description: "Report authorized feedback to Sent"
+  default_prompt: "Use $sent-feedback to prepare a privacy-safe feedback report for my review."

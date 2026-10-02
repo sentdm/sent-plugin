@@ -1,13 +1,34 @@
 ---
 name: sent-profile-provisioning
-description: Executes the Sent Sender Profile lifecycle over the API — creating profiles with the right inheritance, sharing, billing, and WhatsApp options, driving profile completion and its callback, managing 10DLC campaigns per profile, and administering users and roles. Use when calling POST /v3/profiles, handling a completion callback or unclear profile status, choosing inherit or dedicated resources, wiring per-tenant onboarding, or inviting and role-managing users.
+description: Lists, inspects, creates, updates, and deletes Sender Profiles through Sent MCP tools and executes the broader Sender Profile lifecycle over the API — creating profiles with the right inheritance, sharing, billing, and WhatsApp options, driving profile completion and its callback, managing 10DLC campaigns per profile, and administering users and roles. Use when calling POST /v3/profiles, handling a completion callback or unclear profile status, choosing inherit or dedicated resources, wiring per-tenant onboarding, or inviting and role-managing users.
 ---
 
 # Sent Profile Provisioning
 
 This skill is the execution counterpart to profile architecture: once the tenancy boundary is decided, it drives the API calls, the completion callback, the campaign registration, and the user administration that make a profile able to send. Design the boundary with `sender-profile-architect` first; provision it here.
 
-## Provisioning sequence
+## Live MCP profile operations
+
+Use `sender_profiles.list`, `sender_profiles.get`, `sender_profiles.create`, `sender_profiles.update`, and `sender_profiles.delete` through client-managed OAuth 2.1/PKCE. Never request or expose credentials. Validate the calling organization with `account.get` before a mutation.
+
+These tools operate under the authenticated organization. The target argument is `id`, not `profileId`; no `sender_profiles.*` tool accepts an acting `profileId`. Profile grants own no child profiles and receive an empty list. Reauthorize with organization scope to manage its profiles.
+
+- **List/get:** list uses `page` (1-based) and `pageSize` (1-100, default 20) and reports channel readiness. Use real IDs from that list. Get returns `found`/`item`; `found: false` does not distinguish nonexistent, deleted, and another organization's profile. Do not infer cross-tenant existence.
+- **Create:** requires `name`, `shortName`, and `idempotencyKey`. `shortName` is 3-11 letters, numbers, or spaces with at least one letter. Optional arguments are `description`, `smsCountry`, `smsNumberType`, `smsSenderValue`, `smsAreaCodes`, and `compliance`. A supplied `smsCountry` requires `smsNumberType`; omission uses the organization's shared routes. For a dedicated SMS market, use `sent-compliance` to inspect requirements and fill its setup plan first. Provisioning can claim a number and incur registration fees. WhatsApp, RCS, billing, document uploads, inheritance flags, and sandbox arguments are not exposed by this MCP create tool. Required document uploads block it before any write; use the dashboard or documented REST flow. No one-time API key is returned.
+- **Update:** fetch the exact target, then supply `id` and only the changed fields among `name`, `shortName`, and `description`. Omitted fields stay unchanged; explicit `description: null` clears the description. Name and short name cannot be cleared. At least one field is required. Do not populate omitted fields with null or assume this updates channel configuration.
+- **Delete:** fetch and preview the target. Explain that deletion can disconnect WhatsApp, release numbers, and disable live routes. Supply `id` and a nonempty `idempotencyKey`, which is required even if the schema marks it optional. `deleted: false` means no matching owned profile was deleted and does not prove another tenant's profile exists.
+
+For every create, update, or delete, preview the organization, exact target or payload, and side effects, then require explicit confirmation immediately before the call. Changes invalidate confirmation. Every retry needs a new preview and confirmation.
+
+Create and delete use durable receipts. Reuse the original key and arguments for the same intended operation; do not generate a new key after a timeout or an in-flight result. Inspect list/get and returned receipt guidance first. A key reused with different arguments is refused. If interrupted provisioning or teardown needs attention, stop and reconcile in the dashboard rather than retry automatically or replace the key. A new key authorizes a separate operation only after the existing outcome has been reconciled. Verify the returned profile and channel readiness; creation alone does not establish permission to send.
+
+MCP has no profile completion, campaign-management, user-management, or market-addition tools. Use the dashboard or the separately documented REST workflow for those tasks; do not invent tools.
+
+## Broader REST workflow
+
+The following `/v3/profiles` guidance describes the legacy REST lifecycle and its callbacks, not arguments for `sender_profiles.*`. For new REST profile provisioning, check the current API reference for `/v3/sender-profiles`; never mechanically substitute paths, snake_case REST fields, or legacy completion semantics into an MCP call.
+
+### Provisioning sequence
 
 1. **Confirm the credential.** `POST /v3/profiles` requires an organization key with `admin`. Profile-scoped keys cannot create profiles, and a profile key that sends `x-profile-id` receives `403`.
 2. **Decide inheritance and sharing before the call.** These flags shape compliance posture and are awkward to unwind later.

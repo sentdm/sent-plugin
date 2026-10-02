@@ -15,3 +15,6 @@ cases:
   - query: "Delivery dropped yesterday; identify the failing carrier codes and explain the root cause."
     expect: ambiguous
     rationale: The dashboard can establish the aggregate change, but record-level error diagnosis belongs to messaging-performance-analyzer.
+  - query: Give me last-week deliverability using dashboard.deliverability.
+    expect: trigger
+    rationale: Explain that the tool returns all-time data and cannot apply invented date filters.

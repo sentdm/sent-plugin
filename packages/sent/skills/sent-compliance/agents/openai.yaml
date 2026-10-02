@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sent Compliance"
+  short_description: "Inspect SMS requirements and setup plans"
+  default_prompt: "Use $sent-compliance to inspect SMS sender requirements for my target market."

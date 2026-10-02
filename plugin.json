@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "sent",
-  "version": "0.1.0",
-  "description": "Official Sent business messaging plugin for SMS, WhatsApp, RCS, API integration, webhooks, routing, two-way messaging, Sender Profiles, migration, compliance, analytics, and agent-safe operations.",
+  "version": "0.2.0",
+  "description": "Official Sent plugin for SMS, WhatsApp, RCS, scheduled template sends, Sender Profiles, SMS compliance, authorized feedback, contacts, analytics, API integration, webhooks, routing, and migration.",
   "author": {
     "name": "Sent",
     "url": "https://sent.dm"
@@ -33,6 +33,34 @@
     "routing",
     "two-way-messaging",
     "migration",
-    "mcp"
-  ]
+    "mcp",
+    "feedback",
+    "scheduled-messaging"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Sent",
+        "shortDescription": "Business messaging workflows",
+        "longDescription": "Use Sent MCP operations for safe account, contact, template, analytics, and messaging workflows. Focused specialist skills add API integration, webhook engineering, contact-aware routing, two-way messaging, Sender Profile architecture and provisioning, CPaaS migration, delivery diagnosis, US A2P 10DLC, WhatsApp Business, RCS launch readiness, and cross-channel template design.",
+        "developerName": "Sent",
+        "category": "Productivity",
+        "capabilities": [
+          "Interactive",
+          "Write"
+        ],
+        "websiteURL": "https://github.com/sentdm/sent-plugin#readme",
+        "supportURL": "https://www.sent.dm/en/company/contact-support",
+        "privacyPolicyURL": "https://www.sent.dm/en/legal/privacy-policy",
+        "termsOfServiceURL": "https://www.sent.dm/en/legal/terms-of-service",
+        "defaultPrompt": [
+          "Use $sent-integration-starter to review how this application should integrate Sent safely.",
+          "Use $sent-routing-strategist to explain the safest channel and reroute policy for this workflow.",
+          "Use $migrate-to-sent to plan a staged migration from our current messaging provider."
+        ],
+        "logo": "./assets/logo.svg",
+        "composerIcon": "./assets/logo.svg"
+      }
+    }
+  }
 }

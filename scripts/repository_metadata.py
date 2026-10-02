@@ -10,6 +10,35 @@ from typing import Any
 
 
 MUTATION_CLASSES = {"read_only", "state_changing", "destructive"}
+# Security policy is independent of editable public-surface.json. A metadata
+# change must never remove a required confirmation check or move it to a skill
+# whose instructions do not protect that operation.
+REQUIRED_CONFIRMATION_TOOLS = {
+    "messages.send": ("sent-messaging", "destructive"),
+    "contacts.create_many": ("sent-contacts", "state_changing"),
+    "contacts.delete": ("sent-contacts", "destructive"),
+    "templates.delete": ("sent-templates", "destructive"),
+    "feedback.send": ("sent-feedback", "state_changing"),
+    "sender_profiles.create": ("sent-profile-provisioning", "state_changing"),
+    "sender_profiles.update": ("sent-profile-provisioning", "state_changing"),
+    "sender_profiles.delete": ("sent-profile-provisioning", "destructive"),
+}
+
+
+def openai_interface(catalog: dict[str, Any]) -> dict[str, Any]:
+    """Build consistent portable and Codex presentation from listing metadata."""
+    fields = {
+        "displayName": "display_name", "shortDescription": "short_description",
+        "longDescription": "long_description", "developerName": "developer_name",
+        "category": "category", "capabilities": "capabilities",
+        "websiteURL": "website_url", "supportURL": "support_url",
+        "privacyPolicyURL": "privacy_policy_url", "termsOfServiceURL": "terms_of_service_url",
+        "defaultPrompt": "default_prompts",
+    }
+    return {
+        **{target: catalog.get(source) for target, source in fields.items()},
+        "logo": "./assets/logo.svg", "composerIcon": "./assets/logo.svg",
+    }
 
 
 class MetadataError(ValueError):
@@ -102,6 +131,12 @@ def load_repository_metadata(root: Path) -> RepositoryMetadata:
             raise MetadataError(f"{surface_path}: {name} confirmation_required must be boolean")
         if mutation == "read_only" and confirmation:
             raise MetadataError(f"{surface_path}: read-only tool {name} cannot require mutation confirmation")
+        if mutation != "read_only" and not confirmation and name != "numbers.lookup":
+            raise MetadataError(f"{surface_path}: {name} must require confirmation under the independent safety policy")
         tools[name] = ToolMetadata(owner, mutation, confirmation)
+
+    for name, (owner, mutation) in REQUIRED_CONFIRMATION_TOOLS.items():
+        if tools.get(name) != ToolMetadata(owner, mutation, True):
+            raise MetadataError(f"{surface_path}: {name} must retain its owner, mutation class, and confirmation under the independent safety policy")
 
     return RepositoryMetadata(version=version, skills=skills, tools=tools)

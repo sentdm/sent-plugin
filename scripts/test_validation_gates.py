@@ -232,7 +232,41 @@ def contract_manifest_drift(root: Path) -> None:
     path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 
+def disabled_profile_confirmation(root: Path) -> None:
+    path = root / "packages/sent/public-surface.json"
+    surface = json.loads(path.read_text())
+    for name in ("sender_profiles.create", "sender_profiles.update", "sender_profiles.delete"):
+        surface["tools"][name]["confirmation_required"] = False
+    path.write_text(json.dumps(surface))
+    missing_profile_confirmation_instruction(root)
+
+
+def missing_profile_confirmation_instruction(root: Path) -> None:
+    path = root / "packages/sent/skills/sent-profile-provisioning/SKILL.md"
+    path.write_text(path.read_text().replace("explicit confirmation", "authorization"))
+
+
+def missing_portable_openai_metadata(root: Path) -> None:
+    path = root / "packages/sent/plugin.json"
+    manifest = json.loads(path.read_text())
+    manifest.pop("extensions")
+    path.write_text(json.dumps(manifest))
+
+
+def invalid_support_url(root: Path) -> None:
+    path = root / "adapter-sources/shared/marketplace.json"
+    catalog = json.loads(path.read_text())
+    catalog["support_url"] = "https://"
+    path.write_text(json.dumps(catalog))
+    subprocess.run([sys.executable, str(root / "scripts/generate_adapters.py")], cwd=root,
+                   check=True, capture_output=True, text=True)
+
+
 CASES: tuple[tuple[str, Mutation, str], ...] = (
+    ("independent mutation confirmation policy", disabled_profile_confirmation, "independent safety policy"),
+    ("profile confirmation instructions", missing_profile_confirmation_instruction, "must require explicit confirmation"),
+    ("portable OpenAI listing", missing_portable_openai_metadata, "portable OpenAI interface must match"),
+    ("support URL hostname", invalid_support_url, "Codex supportURL must be an HTTPS URL"),
     ("closed portable manifest", unknown_manifest_field, "plugin.json schema"),
     ("HTTPS MCP policy", insecure_mcp_url, "exact Sent Streamable HTTP endpoint"),
     ("credential content gate", credential_in_content, "public gate rejected bearer credential"),

@@ -1,0 +1,17 @@
+skill: sent-feedback
+cases:
+- query: 'Please send Sent this feedback: scheduled sends should offer a cancellation tool.'
+  expect: trigger
+  rationale: User explicitly requests reporting a missing capability.
+- query: Report the confusing output from dashboard.deliverability to Sent after I review it.
+  expect: trigger
+  rationale: Authorized report preparation for a confusing tool result.
+- query: This tool error is annoying; diagnose it without sending a report.
+  expect: no_trigger
+  rationale: An error alone is not authorization for feedback.
+- query: Why did our SMS delivery rate fall yesterday?
+  expect: no_trigger
+  rationale: Delivery diagnosis belongs to messaging-performance-analyzer.
+- query: Investigate this send failure and report a sanitized bug to Sent.
+  expect: ambiguous
+  rationale: Use sent-messaging for investigation and sent-feedback for the authorized report.

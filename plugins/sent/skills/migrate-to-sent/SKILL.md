@@ -68,7 +68,7 @@ Tenancy maps as follows, with the boundary decision owned by `sender-profile-arc
 
 ## Migration sequence
 
-1. **Inventory** every send call site, webhook handler, status branch, template, suppression list, and credential. Use `scripts/inventory_scan.py` to find them mechanically.
+1. **Inventory** every send call site, webhook handler, status branch, template, suppression list, and credential. Use `scripts/inventory_scan.py` to find them mechanically. It reads local regular files inside the selected repository, skips symbolic links and environment files, and reports paths, line numbers, and migration guidance without source excerpts. It makes no network requests.
 2. **Map** each item using [references/provider-mapping.md](references/provider-mapping.md), flagging ordered-fallback arrays and numeric error codes as required rewrites.
 3. **Stand up Sent in parallel**: credentials, one webhook per environment, verified receiver, templates re-registered and approved.
 4. **Prove equivalence in sandbox** with `"sandbox": true`, then with a small live cohort confirmed to `DELIVERED`.

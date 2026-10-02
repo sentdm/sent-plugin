@@ -6,6 +6,7 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -35,6 +36,8 @@ MDR = load_module("sent_mdr_analyzer", MDR_ROOT / "analyze_mdr_funnel.py")
 EVIDENCE = load_module("sent_10dlc_evidence", TEN_DLC_ROOT / "validate_10dlc_packet.py")
 CAMPAIGN = load_module("sent_campaign_validator", TEN_DLC_ROOT / "validate_campaign_payload.py")
 TEMPLATE = load_module("sent_template_linter", TEMPLATE_ROOT / "lint_waba_template.py")
+INVENTORY_SCRIPT = SKILLS / "migrate-to-sent" / "scripts" / "inventory_scan.py"
+INVENTORY = load_module("sent_inventory_scanner", INVENTORY_SCRIPT)
 
 
 def read_fixture(root: Path, name: str) -> object:
@@ -487,6 +490,52 @@ class PublicCliBehaviorTests(unittest.TestCase):
         self.assertEqual(result.returncode, 3, (result.stdout, result.stderr))
         report = json.loads(result.stdout)
         self.assertEqual(report["error_codes"], {"ERR_ROUTE_DENIED": 1})
+
+
+class InventorySecurityTests(unittest.TestCase):
+    def test_credentials_never_appear_in_reports(self) -> None:
+        source = '\n'.join((
+            'config = {"api_key": "SYNTHETIC_SECRET_DO_NOT_USE", "url": "https://conversation.api.sinch.com"}',
+            'const client = require("twilio")("SYNTHETIC_SID", "SYNTHETIC_AUTH_TOKEN");',
+            'password = "SYNTHETIC PASSWORD WITH SPACES"; url = "https://conversation.api.sinch.com"',
+        ))
+        secrets = ("SYNTHETIC_SECRET_DO_NOT_USE", "SYNTHETIC_SID", "SYNTHETIC_AUTH_TOKEN", "SYNTHETIC PASSWORD WITH SPACES")
+        findings = INVENTORY.scan_text(source, "config.js")
+        self.assertTrue(findings)
+        self.assertTrue(all(f.path == "config.js" and f.line > 0 and f.rule_id for f in findings))
+        self.assertTrue(all(f.excerpt == "[source omitted]" for f in findings))
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "config.js").write_text(source)
+            for output_format in ("json", "text"):
+                with self.subTest(output_format=output_format):
+                    result = subprocess.run([sys.executable, str(INVENTORY_SCRIPT), "--path", directory,
+                                             "--format", output_format], capture_output=True, text=True)
+                    self.assertEqual(result.returncode, INVENTORY.EXIT_FINDINGS, result.stderr)
+                    for secret in secrets:
+                        self.assertNotIn(secret, result.stdout + result.stderr)
+
+    def test_scan_stays_inside_regular_repository_files(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            root = base / "repo"
+            root.mkdir()
+            source = 'url = "https://conversation.api.sinch.com"'
+            (root / "config.js").write_text(source)
+            outside = base / "outside"
+            outside.mkdir()
+            (outside / "config.js").write_text(source)
+            (root / "external.js").symlink_to(outside / "config.js")
+            (root / "external-dir").symlink_to(outside, target_is_directory=True)
+            (root / ".env").write_text(source)
+            (root / "env-alias.js").symlink_to(root / ".env")
+            if hasattr(os, "mkfifo"):
+                os.mkfifo(root / "pipe.js")
+            result = subprocess.run([sys.executable, str(INVENTORY_SCRIPT), "--path", str(root),
+                                     "--format", "json"], capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, INVENTORY.EXIT_FINDINGS, result.stderr)
+            report = json.loads(result.stdout)
+            self.assertTrue(report["findings"])
+            self.assertEqual({f["path"] for f in report["findings"]}, {"config.js"})
 
 
 class FixturePrivacyTests(unittest.TestCase):

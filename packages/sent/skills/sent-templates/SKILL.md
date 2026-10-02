@@ -9,9 +9,11 @@ Operate existing template records with `templates.list`, `templates.get`, `templ
 
 ## Establish connection and scope
 
-Use client-managed OAuth 2.1/PKCE and never request or expose credentials. Surface the active organization and Sender Profile before deletion; use `sent-account-readiness` if the connection context does not expose both. Reauthorize in the client to change scope.
+Use client-managed OAuth 2.1/PKCE and never request or expose credentials. Surface the active organization and Sender Profile before deletion; use `sent-account-readiness` if the connection context does not expose both.
 
 Avoid repeating template body text or sample data unnecessarily. Prefer template identifiers, names, languages, channels, categories, and statuses in summaries.
+
+An organization grant may select an owned Sender Profile with the tool schema's optional `profileId`; omit it to act as the authenticated account. Validate ownership with `sender_profiles.list` or `sender_profiles.get`, and use the same selector for preflight reads, mutations, and follow-up reads. Profile grants cannot use this selector. Reauthorize for a different organization or a profile outside the grant. Never invent scope fields or request credentials.
 
 ## Find and inspect templates
 

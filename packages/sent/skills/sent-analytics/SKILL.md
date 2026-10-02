@@ -5,27 +5,28 @@ description: Queries Sent phone-number capabilities and aggregate messaging, del
 
 # Sent Analytics
 
-Use `numbers.lookup`, `dashboard.messages_sent`, `dashboard.deliverability`, and `dashboard.contacts` for read-only analytics.
+Use `numbers.lookup`, `dashboard.messages_sent`, `dashboard.deliverability`, and `dashboard.contacts` for analytics and paid external number lookup. `numbers.lookup` is state-changing and non-idempotent, even though it does not send a message.
 
 ## Establish context
 
-Use client-managed OAuth 2.1/PKCE. Never request or expose a token, API key, authorization header, client ID, or secret. Identify the active organization and Sender Profile when the client exposes them. If the requested scope differs, reauthorize through the client rather than adding credentials or hidden scope fields.
+Use client-managed OAuth 2.1/PKCE. Never request or expose a token, API key, authorization header, client ID, or secret. Identify the active organization and Sender Profile when the client exposes them.
 
 Minimize sensitive output: mask phone numbers, aggregate where possible, and omit contact, KYC, account, and message-body data that is not needed to answer the question.
 
+An organization grant may select an owned Sender Profile with the tool schema's optional `profileId`; omit it to act as the authenticated account. Validate ownership with `sender_profiles.list` or `sender_profiles.get`, and use the same selector for preflight reads, mutations, and follow-up reads. Profile grants cannot use this selector. Reauthorize for a different organization or a profile outside the grant. Never invent scope fields or request credentials.
+
 ## Look up a number
 
-Use `numbers.lookup` to obtain available capability, formatting, type, or routing signals for the supplied number. A lookup describes capability; it is not evidence of opt-in, consent, ownership, identity, or permission to message. State that distinction whenever the result could be used to plan outreach.
+Use `numbers.lookup` to obtain available capability, formatting, type, or routing signals for the supplied number. A lookup describes capability; it is not evidence of opt-in, consent, ownership, identity, or permission to message. State that distinction whenever the result could be used to plan outreach. The paid lookup allowance is 1000 calls per authenticated account scope per UTC day, shared across acting profiles and resetting at 00:00 UTC. Respect quota errors; do not rotate profiles or retry in a loop. Temporary quota-check failure can allow lookup through, which does not make it free.
 
 ## Query dashboard metrics
 
-1. Resolve an explicit date range and timezone before calling a dashboard tool. If the user omits either, ask or clearly state the assumption.
-2. Use `dashboard.messages_sent` for sent-volume metrics.
-3. Use `dashboard.deliverability` for aggregate acceptance and delivery outcomes.
-4. Use `dashboard.contacts` for aggregate contact metrics.
-5. Keep comparisons on the same organization, Sender Profile, date range, timezone, channel, and aggregation grain unless the user explicitly requests otherwise.
+1. Resolve a date range, timezone, and aggregation grain for `dashboard.messages_sent`. It counts delivered/read outbound SMS and WhatsApp in supported preset or custom windows, using 15-minute, hourly, or daily buckets; do not describe it as all queued sends or RCS volume.
+2. `dashboard.deliverability` returns an all-time outbound percentage: `(SENT + DELIVERED + READ) / (all except FILTERED and BLOCKED)`. It is not a date-bounded delivery-only success rate. Do not invent date filters or claim a last-week comparison from this scalar.
+3. `dashboard.contacts` returns the current total contact count. One snapshot does not establish contact growth, activity, or a historical trend.
+4. Keep comparisons on the same organization, acting profile, supported time window, timezone, channel coverage, and grain. State the tool's actual scope: date range/timezone for volume, all-time for deliverability, snapshot for contacts.
 
-Every result must state the date range and timezone used. Label accepted, sent, delivered, failed, and unknown states according to what the response actually establishes; never collapse accepted into delivered.
+Label processing and delivery states according to the evidence; never collapse accepted into delivered. Use exported message-level evidence or another documented source for unsupported historical comparisons.
 
 ## Choose aggregate analytics or diagnosis
 
