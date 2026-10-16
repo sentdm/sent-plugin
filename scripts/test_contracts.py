@@ -116,6 +116,38 @@ class RepositoryMetadataContractTests(unittest.TestCase):
             self.assertEqual(marketplace["metadata"]["version"], "9.8.7")
 
 
+class ClaudeOverlayContractTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.metadata = REPOSITORY_METADATA.load_repository_metadata(ROOT)
+        self.overlay = REPOSITORY_METADATA.load_claude_overlay(ROOT, self.metadata)
+        self.canonical = json.loads((ROOT / "packages" / "sent" / "public-surface.json").read_text(encoding="utf-8"))
+
+    def test_claude_surface_is_canonical_minus_withheld(self) -> None:
+        claude = json.loads((ROOT / "claude-plugins" / "sent" / "public-surface.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(self.overlay.withheld_tools), {"sender_profiles.create", "sender_profiles.delete"})
+        self.assertEqual(
+            claude["tools"],
+            {name: tool for name, tool in self.canonical["tools"].items() if name not in self.overlay.withheld_tools},
+        )
+
+    def test_non_claude_surfaces_match_canonical(self) -> None:
+        for path in (ROOT / "public-surface.json", ROOT / "plugins" / "sent" / "public-surface.json"):
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8")), self.canonical, path)
+
+    def test_claude_overlay_applies_each_edit_once(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            GENERATOR.build(output)
+            claude = output / "claude-plugins" / "sent"
+            codex = output / "plugins" / "sent"
+            for relative, edits in self.overlay.edits.items():
+                claude_text = (claude / relative).read_text(encoding="utf-8")
+                codex_text = (codex / relative).read_text(encoding="utf-8")
+                for find, replace in edits:
+                    self.assertIn(replace, claude_text, relative)
+                    self.assertIn(find, codex_text, relative)
+
+
 class SkillUiMetadataContractTests(unittest.TestCase):
     def test_every_skill_has_unique_valid_openai_metadata(self) -> None:
         metadata = REPOSITORY_METADATA.load_repository_metadata(ROOT)

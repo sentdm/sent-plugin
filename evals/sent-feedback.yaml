@@ -7,32 +7,32 @@ cases:
   expect: trigger
   rationale: Authorized report preparation for a confusing tool result.
 - query: Sent still has no tool to cancel a scheduled send, so I worked around it by hand again. That's the third time this week.
-  expect: trigger
-  rationale: Missing functionality, a repeated workaround, and user frustration warrant a proactive offer to report.
+  expect: no_trigger
+  rationale: Venting about a gap is not a request to report it; feedback is sent only when the user asks.
 - query: We checked the account, scopes, and inputs, but templates.list still fails with an internal error, so I'll find the template in the dashboard instead.
-  expect: trigger
-  rationale: An error still unresolved after diagnosis warrants an optional report offer that does not block the workaround.
+  expect: no_trigger
+  rationale: The user chose a workaround and did not ask to report the error.
 - query: After matching the date range and timezone, dashboard.messages_sent and dashboard.deliverability still disagree on totals with no explanation.
-  expect: trigger
-  rationale: A confusing result that survives diagnosis warrants an offer to report after answering.
+  expect: no_trigger
+  rationale: The user needs the discrepancy explained by sent-analytics, not a report they did not request.
 - query: This tool error is annoying; diagnose it without sending a report.
   expect: no_trigger
   rationale: The user asked for diagnosis and declined reporting.
 - query: contacts.create_many just returned a validation error. What went wrong?
   expect: no_trigger
-  rationale: A fresh error needs diagnosis by the owning skill before any feedback offer.
+  rationale: A fresh error needs diagnosis by the owning skill, not a feedback report.
 - query: The send failed because a template variable was missing; I added it and it went through.
   expect: no_trigger
-  rationale: A routine error that was resolved is not meaningful friction.
+  rationale: The user did not ask to report the resolved error.
 - query: Why won't Sent let me send US SMS before my 10DLC campaign is approved?
   expect: no_trigger
   rationale: An expected compliance restriction belongs to sms-10dlc-registration.
 - query: My Postgres migration keeps timing out and it's driving me crazy.
   expect: no_trigger
-  rationale: Frustration unrelated to Sent does not warrant a Sent feedback offer.
+  rationale: The issue is unrelated to Sent.
 - query: The scheduled-send cancellation gap hit us again, but I already said not to report it.
   expect: no_trigger
-  rationale: A repeated occurrence of friction the user already declined does not warrant another offer.
+  rationale: The user declined reporting.
 - query: Why did our SMS delivery rate fall yesterday?
   expect: no_trigger
   rationale: Delivery diagnosis belongs to messaging-performance-analyzer.
@@ -41,4 +41,4 @@ cases:
   rationale: Use sent-messaging for investigation and sent-feedback for the authorized report.
 - query: I need tomorrow's scheduled send stopped, but there's no cancel tool and my last two workarounds failed. What can I do?
   expect: ambiguous
-  rationale: sent-messaging owns the task; offer a report on the missing tool only after addressing it.
+  rationale: sent-messaging owns the task; report the missing tool only if the user then asks.

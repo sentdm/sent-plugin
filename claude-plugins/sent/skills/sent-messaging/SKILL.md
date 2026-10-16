@@ -38,6 +38,8 @@ For aggregate trends, funnels, or root-cause analysis across many delivery recor
 
 Never call `messages.send` without the preview and explicit confirmation immediately before the call.
 
+From Claude, send to exactly one recipient per call. Do not loop over a list or split recipients across repeated calls to reach many people; for bulk or campaign sends, direct the user to the Sent Dashboard or the REST API in their own application. If Sent returns a connection-policy or send-quota error, stop and report it with any retry time; do not retry automatically.
+
 ## Schedule a send
 
 `scheduledAt` is optional. Resolve the user's date, time, and timezone into an ISO-8601 timestamp with an explicit UTC offset or `Z`; offset-free timestamps are rejected. The instant must be 1 minute to 30 days ahead at execution. Include the exact local time and UTC instant in the preview, and revalidate the window before calling.

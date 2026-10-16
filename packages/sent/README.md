@@ -77,7 +77,7 @@ For engineering work, use `sent-integration-starter` for new integrations, `sent
 
 Authorization is client-managed. The MCP client performs OAuth 2.1 with PKCE and Dynamic Client Registration; the package contains no token, API key, authorization header, OAuth client ID, or credential placeholder.
 
-The grant is tied to the organization and Sender Profile selected during authorization. An organization grant can use a schema-supported `profileId` to act as an owned profile; profile grants cannot. `sender_profiles.*` uses target `id` and rejects acting `profileId`. Reauthorize for another organization or scope outside the grant. Revoke access from **Sent Dashboard → Settings → MCP Connections** when the connection is no longer needed. Never ask a user to paste credentials into a prompt.
+The grant is tied to the organization and Sender Profile selected during authorization. An organization grant can use a schema-supported `profileId` to act as an owned profile; profile grants cannot. `sender_profiles.*` uses target `id` and rejects acting `profileId`. Reauthorize for another organization or scope outside the grant. Revoke access by deactivating the connection's API key in **Sent Dashboard → API Keys** when the connection is no longer needed. Never ask a user to paste credentials into a prompt.
 
 ## Mutation and privacy contract
 
@@ -109,6 +109,8 @@ Live network checks are isolated from pull-request validation. The scheduled/man
 ## Additional MCP behavior
 
 The public MCP surface includes 27 tools. `messages.send` uses an existing template with all required parameters; it supports `scheduledAt` with an explicit timezone offset, from 1 minute to 30 days ahead. Acceptance is not delivery, and quiet hours can defer release.
+
+Connections authorized through Claude's hosted connector (Claude on the web, Desktop, mobile, and Cowork) get a server-enforced policy: Sender Profile creation and deletion are unavailable and happen in the Sent Dashboard, each `messages.send` call accepts one recipient, and organization-wide send quotas apply. Other clients, including Claude Code, keep the full surface.
 
 Feedback goes to Sent staff only with user authorization and a reviewed, sanitized report. It is limited to 2000 characters and 20 calls per authenticated account scope per UTC day, shared across acting profiles. Its note does not guarantee storage, open a support ticket, or promise a response. Number lookup is paid and limited to 1000 calls per authenticated account scope per UTC day.
 

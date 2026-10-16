@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 import yaml
 from jsonschema import Draft202012Validator
 
-from repository_metadata import MetadataError, load_repository_metadata, openai_interface
+from repository_metadata import CLAUDE_OVERLAY, MetadataError, load_claude_overlay, load_repository_metadata, openai_interface
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +26,7 @@ SKILLS = PACKAGE / "skills"
 ROOT_SKILLS = ROOT / "skills"
 EVALS = ROOT / "evals"
 ADAPTER_README = ROOT / "adapter-sources" / "shared" / "README.md"
+CLAUDE_ADAPTER = ROOT / "claude-plugins" / "sent"
 MARKETPLACE_CONTENT = ROOT / "adapter-sources" / "shared" / "marketplace.json"
 SCHEMAS = ROOT / "schemas" / "agent-plugins" / "1.0.0"
 OPENAI_SUBMISSION_SCHEMA = ROOT / "schemas" / "openai" / "chatgpt-app-submission.v1.json"
@@ -549,7 +550,7 @@ def validate_marketplace_content(validation: Validation) -> None:
 def validate_public_content(validation: Validation) -> None:
     scan_roots = (PACKAGE, EVALS, ROOT / "adapter-sources" / "claude" / "commands")
     text_suffixes = {".md", ".yaml", ".yml", ".json", ".py", ".txt", ".csv"}
-    candidates = list(PUBLIC_ROOT_FILES)
+    candidates = [*PUBLIC_ROOT_FILES, ROOT / CLAUDE_OVERLAY]
     candidates.extend(ROOT.glob("docs/*.md"))
     for scan_root in scan_roots:
         candidates.extend(scan_root.rglob("*"))
@@ -618,32 +619,80 @@ def validate_repository_hygiene(validation: Validation) -> None:
         validation.check(path.suffix.lower() not in FORBIDDEN_KEY_SUFFIXES, f"repository contains key material: {relative}")
 
 
-def validate_tool_contract(validation: Validation) -> None:
+def validate_tool_contract(
+    validation: Validation,
+    skills: Path = SKILLS,
+    tools_by_owner: dict[str, set[str]] = MCP_SKILLS,
+    mutation_tools: dict[str, str] = MUTATION_TOOLS,
+    expected_tools: set[str] = EXPECTED_TOOLS,
+    label: str = "",
+) -> None:
     advertised: set[str] = set()
-    for name, tools in MCP_SKILLS.items():
-        text = (SKILLS / name / "SKILL.md").read_text(encoding="utf-8")
+    for name, tools in tools_by_owner.items():
+        text = (skills / name / "SKILL.md").read_text(encoding="utf-8")
         for tool in tools:
-            validation.check(tool in text, f"{name}: missing documented MCP tool {tool}")
+            validation.check(tool in text, f"{label}{name}: missing documented MCP tool {tool}")
         advertised.update(tools)
     validation.check(
-        advertised == EXPECTED_TOOLS,
-        "documented MCP tool ownership must match public-surface.json; "
-        f"missing={sorted(EXPECTED_TOOLS - advertised)}, unexpected={sorted(advertised - EXPECTED_TOOLS)}",
+        advertised == expected_tools,
+        f"{label}documented MCP tool ownership must match public-surface.json; "
+        f"missing={sorted(expected_tools - advertised)}, unexpected={sorted(advertised - expected_tools)}",
     )
 
-    for tool, skill in MUTATION_TOOLS.items():
-        normalized = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8").lower()
-        validation.check("explicit confirmation" in normalized, f"{skill}: {tool} must require explicit confirmation")
-        validation.check("immediately before" in normalized, f"{skill}: {tool} confirmation must occur immediately before the call")
-        validation.check("retry" in normalized and "new" in normalized, f"{skill}: {tool} retries must require a new confirmation")
+    for tool, skill in mutation_tools.items():
+        normalized = (skills / skill / "SKILL.md").read_text(encoding="utf-8").lower()
+        validation.check("explicit confirmation" in normalized, f"{label}{skill}: {tool} must require explicit confirmation")
+        validation.check("immediately before" in normalized, f"{label}{skill}: {tool} confirmation must occur immediately before the call")
+        validation.check("retry" in normalized and "new" in normalized, f"{label}{skill}: {tool} retries must require a new confirmation")
 
-    messaging = (SKILLS / "sent-messaging" / "SKILL.md").read_text(encoding="utf-8").lower()
-    validation.check("ambiguous" in messaging and "never" in messaging and "retry" in messaging, "sent-messaging must forbid blind ambiguous retries")
-    validation.check("balance" in messaging and "high-volume" in messaging, "sent-messaging must check balance before high-volume sends")
-    validation.check("accepted" in messaging and "delivered" in messaging, "sent-messaging must distinguish accepted from delivered")
-    analytics = (SKILLS / "sent-analytics" / "SKILL.md").read_text(encoding="utf-8").lower()
-    validation.check("timezone" in analytics and "date range" in analytics, "sent-analytics must state date range and timezone")
-    validation.check("consent" in analytics and "capability" in analytics, "sent-analytics must not treat lookup as consent")
+    messaging = (skills / "sent-messaging" / "SKILL.md").read_text(encoding="utf-8").lower()
+    validation.check("ambiguous" in messaging and "never" in messaging and "retry" in messaging, f"{label}sent-messaging must forbid blind ambiguous retries")
+    validation.check("balance" in messaging and "high-volume" in messaging, f"{label}sent-messaging must check balance before high-volume sends")
+    validation.check("accepted" in messaging and "delivered" in messaging, f"{label}sent-messaging must distinguish accepted from delivered")
+    analytics = (skills / "sent-analytics" / "SKILL.md").read_text(encoding="utf-8").lower()
+    validation.check("timezone" in analytics and "date range" in analytics, f"{label}sent-analytics must state date range and timezone")
+    validation.check("consent" in analytics and "capability" in analytics, f"{label}sent-analytics must not treat lookup as consent")
+
+
+def validate_claude_adapter(validation: Validation) -> None:
+    """The Claude adapter withholds overlay tools; every other package keeps the full surface."""
+    if REPOSITORY_METADATA is None:
+        return
+    try:
+        overlay = load_claude_overlay(ROOT, REPOSITORY_METADATA)
+    except MetadataError as exc:
+        validation.errors.append(str(exc))
+        return
+
+    canonical = load_json(PACKAGE / "public-surface.json")["tools"]
+    for path in (ROOT / "public-surface.json", ROOT / "plugins" / "sent" / "public-surface.json"):
+        validation.check(load_json(path)["tools"] == canonical, f"{path.relative_to(ROOT)} must keep the full canonical MCP surface")
+    retained = {name: tool for name, tool in canonical.items() if name not in overlay.withheld_tools}
+    validation.check(
+        load_json(CLAUDE_ADAPTER / "public-surface.json")["tools"] == retained,
+        "Claude public-surface.json must equal the canonical surface minus withheld tools",
+    )
+
+    tools_by_owner: dict[str, set[str]] = {}
+    for name, tool in retained.items():
+        tools_by_owner.setdefault(tool["owner"], set()).add(name)
+    mutation_tools = {name: tool["owner"] for name, tool in retained.items() if tool["confirmation_required"]}
+    validate_tool_contract(validation, CLAUDE_ADAPTER / "skills", tools_by_owner, mutation_tools, set(retained), "Claude adapter ")
+
+    for skill_file in sorted((CLAUDE_ADAPTER / "skills").glob("*/SKILL.md")):
+        metadata, _ = parse_skill(skill_file, validation)
+        description = metadata.get("description")
+        validation.check(
+            set(metadata) == {"name", "description"} and metadata.get("name") == skill_file.parent.name
+            and isinstance(description, str) and 1 <= len(description) <= 1024,
+            f"{skill_file.relative_to(ROOT)}: Claude overlay broke skill frontmatter",
+        )
+    for path in sorted((CLAUDE_ADAPTER / "skills").rglob("*.md")):
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if any(tool in line for tool in overlay.withheld_tools) and "do not call" not in line.lower():
+                validation.errors.append(
+                    f"{path.relative_to(ROOT)}:{number}: Claude skill names a withheld tool outside a do-not-call instruction"
+                )
 
 
 def validate_documentation(validation: Validation) -> None:
@@ -1083,6 +1132,7 @@ def main() -> None:
     validate_contract_content(validation)
     validate_claude_command_sources(validation)
     validate_adapters(validation)
+    validate_claude_adapter(validation)
     validate_openai_submission(validation)
     validation.finish()
 
