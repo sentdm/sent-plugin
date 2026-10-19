@@ -687,12 +687,42 @@ def validate_claude_adapter(validation: Validation) -> None:
             and isinstance(description, str) and 1 <= len(description) <= 1024,
             f"{skill_file.relative_to(ROOT)}: Claude overlay broke skill frontmatter",
         )
-    for path in sorted((CLAUDE_ADAPTER / "skills").rglob("*.md")):
+    # Every Markdown and YAML file the adapter ships is agent-facing text: skills and their
+    # references, the slash commands copied from adapter-sources, the README, and the agents/*.yaml
+    # metadata. The overlay can target any of them.
+    for path in sorted(p for p in CLAUDE_ADAPTER.rglob("*") if p.is_file() and p.suffix in {".md", ".yaml", ".yml"}):
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            if any(tool in line for tool in overlay.withheld_tools) and "do not call" not in line.lower():
-                validation.errors.append(
-                    f"{path.relative_to(ROOT)}:{number}: Claude skill names a withheld tool outside a do-not-call instruction"
-                )
+            for tool in sorted(overlay.withheld_tools):
+                if not withheld_tool_mentions_are_prohibitions(line, tool):
+                    validation.errors.append(
+                        f"{path.relative_to(ROOT)}:{number}: Claude adapter names withheld tool {tool} outside a do-not-call instruction"
+                    )
+
+
+WITHHELD_SENTENCE_BOUNDARY = re.compile(r"(?<=[.;!?])\s+")
+WITHHELD_PROHIBITION = re.compile(r"\b(?:do not|don't|never|cannot|can't|not)\b", re.IGNORECASE)
+WITHHELD_CALL_VERB = re.compile(r"\b(?:call|calls|calling|run|runs|running|invoke|invokes|use|uses|execute|executes)\s*`?\s*$", re.IGNORECASE)
+WITHHELD_NEGATED_CALL = re.compile(
+    r"\b(?:do not|don't|never|cannot|can't|not)\s+(?:\w+\s+)?(?:call|calls|calling|run|runs|running|invoke|invokes|use|uses|execute|executes)\s*`?\s*$",
+    re.IGNORECASE,
+)
+
+
+def withheld_tool_mentions_are_prohibitions(line: str, tool: str) -> bool:
+    """True when every mention of ``tool`` on ``line`` is governed by a do-not-call instruction.
+
+    Sharing a line with the phrase is not enough: "do not call `x`; otherwise call `x` with the plan"
+    instructs the call in its second clause. Each mention must sit in a sentence that prohibits
+    something, and must not be the direct object of an un-negated call verb.
+    """
+    for sentence in WITHHELD_SENTENCE_BOUNDARY.split(line):
+        for match in re.finditer(re.escape(tool), sentence):
+            if not WITHHELD_PROHIBITION.search(sentence):
+                return False
+            preceding = " ".join(sentence[:match.start()].split()[-4:])
+            if WITHHELD_CALL_VERB.search(preceding) and not WITHHELD_NEGATED_CALL.search(preceding):
+                return False
+    return True
 
 
 def validate_documentation(validation: Validation) -> None:

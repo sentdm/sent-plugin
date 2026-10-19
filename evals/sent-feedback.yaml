@@ -40,5 +40,5 @@ cases:
   expect: ambiguous
   rationale: Use sent-messaging for investigation and sent-feedback for the authorized report.
 - query: I need tomorrow's scheduled send stopped, but there's no cancel tool and my last two workarounds failed. What can I do?
-  expect: ambiguous
-  rationale: sent-messaging owns the task; report the missing tool only if the user then asks.
+  expect: no_trigger
+  rationale: sent-messaging owns the task; the user asked for help, not for a report, and feedback is never solicited.
