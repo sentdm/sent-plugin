@@ -10,7 +10,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from repository_metadata import load_repository_metadata, openai_interface
+from repository_metadata import ClaudeOverlay, load_claude_overlay, load_repository_metadata, openai_interface
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,12 +59,29 @@ def reset_tree(path: Path, output_root: Path) -> None:
         shutil.rmtree(path)
 
 
+def apply_claude_overlay(claude_root: Path, overlay: ClaudeOverlay, public_surface: dict) -> None:
+    tools = {name: tool for name, tool in public_surface["tools"].items() if name not in overlay.withheld_tools}
+    write_json(claude_root / "public-surface.json", {**public_surface, "tools": tools})
+    for relative, edits in overlay.edits.items():
+        path = claude_root / relative
+        if not path.is_file():
+            raise RuntimeError(f"Claude overlay target does not exist: {relative}")
+        text = path.read_text(encoding="utf-8")
+        for index, (find, replace) in enumerate(edits, 1):
+            matches = text.count(find)
+            if matches != 1:
+                raise RuntimeError(f"Claude overlay edit {relative}#{index} matched {matches} times; expected exactly 1")
+            text = text.replace(find, replace)
+        path.write_text(text, encoding="utf-8")
+
+
 def build(output_root: Path, source_root: Path = ROOT) -> None:
     package = source_root / "packages" / "sent"
     commands = source_root / "adapter-sources" / "claude" / "commands"
     adapter_readme = source_root / "adapter-sources" / "shared" / "README.md"
     marketplace = read_json(source_root / "adapter-sources" / "shared" / "marketplace.json")
     metadata = load_repository_metadata(source_root)
+    claude_overlay = load_claude_overlay(source_root, metadata)
     portable_manifest = read_json(package / "plugin.json")
     portable_mcp = read_json(package / "mcp.json")
     public_surface = read_json(package / "public-surface.json")
@@ -97,6 +114,7 @@ def build(output_root: Path, source_root: Path = ROOT) -> None:
         shutil.copy2(adapter_readme, adapter_root / "README.md")
         shutil.copy2(package / "LICENSE", adapter_root / "LICENSE")
         write_json(adapter_root / "public-surface.json", public_surface)
+    apply_claude_overlay(claude_root, claude_overlay, public_surface)
 
     common = {
         "name": "sent",

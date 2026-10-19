@@ -12,6 +12,8 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
 Mutation = Callable[[Path], None]
@@ -274,7 +276,42 @@ def missing_claude_privacy_url(root: Path) -> None:
     subprocess.run([sys.executable, str(path)], cwd=root, check=True, capture_output=True, text=True)
 
 
+def edit_claude_overlay(root: Path, change: Callable[[dict], None]) -> None:
+    path = root / "adapter-sources/claude/overlay.yaml"
+    overlay = yaml.safe_load(path.read_text())
+    change(overlay)
+    path.write_text(yaml.safe_dump(overlay, sort_keys=False, allow_unicode=True))
+    subprocess.run([sys.executable, str(root / "scripts/generate_adapters.py")], cwd=root,
+                   check=True, capture_output=True, text=True)
+
+
+def stale_claude_overlay_find(root: Path) -> None:
+    path = root / "packages/sent/skills/sent-compliance/SKILL.md"
+    path.write_text(path.read_text().replace("The plan creates a new profile.", "The plan creates one new profile."))
+
+
+def unknown_claude_withheld_tool(root: Path) -> None:
+    path = root / "adapter-sources/claude/overlay.yaml"
+    path.write_text(path.read_text().replace(
+        "withheld_tools:\n", "withheld_tools:\n  sender_profiles.purge: Not a real tool.\n", 1))
+
+
+def removed_claude_confirmation(root: Path) -> None:
+    edit_claude_overlay(root, lambda overlay: overlay["edits"]["skills/sent-profile-provisioning/SKILL.md"].append(
+        {"find": "require explicit confirmation immediately before the call", "replace": "ask the user"}))
+
+
+def claude_withheld_tool_instruction(root: Path) -> None:
+    def change(overlay: dict) -> None:
+        overlay["edits"]["skills/sent/SKILL.md"][0]["replace"] += " Call `sender_profiles.create` when asked."
+    edit_claude_overlay(root, change)
+
+
 CASES: tuple[tuple[str, Mutation, str], ...] = (
+    ("stale Claude overlay edit", stale_claude_overlay_find, "matched 0 times"),
+    ("unknown Claude withheld tool", unknown_claude_withheld_tool, "is not in the canonical public surface"),
+    ("Claude retained-tool confirmation", removed_claude_confirmation, "Claude adapter sent-profile-provisioning"),
+    ("Claude withheld-tool instruction", claude_withheld_tool_instruction, "outside a do-not-call instruction"),
     ("ambient credential reads", ambient_credential_read, "public gate rejected ambient credential read"),
     ("Claude privacy policy listing", missing_claude_privacy_url, "Claude privacyPolicyUrl must match"),
     ("independent mutation confirmation policy", disabled_profile_confirmation, "independent safety policy"),

@@ -38,7 +38,7 @@ Do **not** use when:
 | Check the selected account, balance, onboarding state, or readiness to send | `sent-account-readiness` |
 | Report a bug, missing feature, confusing result, or praise to Sent with user authorization | `sent-feedback` |
 | Inspect SMS market fields, document requirements, or an exact setup call | `sent-compliance` |
-| List, get, create, update, or delete owned Sender Profiles through MCP | `sent-profile-provisioning` |
+| List, get, or update owned Sender Profiles through MCP, or hand creation and deletion to the Sent Dashboard | `sent-profile-provisioning` |
 
 ### Specialist guidance
 

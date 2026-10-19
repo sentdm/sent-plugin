@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 
@@ -140,3 +140,54 @@ def load_repository_metadata(root: Path) -> RepositoryMetadata:
             raise MetadataError(f"{surface_path}: {name} must retain its owner, mutation class, and confirmation under the independent safety policy")
 
     return RepositoryMetadata(version=version, skills=skills, tools=tools)
+
+
+CLAUDE_OVERLAY = Path("adapter-sources") / "claude" / "overlay.yaml"
+
+
+@dataclass(frozen=True)
+class ClaudeOverlay:
+    withheld_tools: dict[str, str]
+    edits: dict[str, tuple[tuple[str, str], ...]]
+
+
+def load_claude_overlay(root: Path, metadata: RepositoryMetadata) -> ClaudeOverlay:
+    """Load the Claude-only tool withholding and text edits applied to claude-plugins/sent."""
+    import yaml
+
+    path = root / CLAUDE_OVERLAY
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise MetadataError(f"could not read {CLAUDE_OVERLAY}: {exc}") from exc
+    if not isinstance(raw, dict) or set(raw) != {"withheld_tools", "edits"}:
+        raise MetadataError(f"{CLAUDE_OVERLAY}: expected exactly withheld_tools and edits")
+
+    withheld = raw["withheld_tools"]
+    if not isinstance(withheld, dict) or not withheld:
+        raise MetadataError(f"{CLAUDE_OVERLAY}: withheld_tools must be a non-empty mapping")
+    for name, reason in withheld.items():
+        if name not in metadata.tools:
+            raise MetadataError(f"{CLAUDE_OVERLAY}: withheld tool {name!r} is not in the canonical public surface")
+        if not isinstance(reason, str) or not reason.strip():
+            raise MetadataError(f"{CLAUDE_OVERLAY}: withheld tool {name} needs a reason")
+
+    raw_edits = raw["edits"]
+    if not isinstance(raw_edits, dict):
+        raise MetadataError(f"{CLAUDE_OVERLAY}: edits must be a mapping of adapter paths")
+    edits: dict[str, tuple[tuple[str, str], ...]] = {}
+    for relative, entries in raw_edits.items():
+        target = PurePosixPath(str(relative))
+        if target.is_absolute() or ".." in target.parts or not target.parts:
+            raise MetadataError(f"{CLAUDE_OVERLAY}: edit path {relative!r} must stay inside the Claude adapter")
+        if not isinstance(entries, list) or not entries:
+            raise MetadataError(f"{CLAUDE_OVERLAY}: {relative} needs a non-empty list of edits")
+        pairs = []
+        for index, entry in enumerate(entries, 1):
+            if (not isinstance(entry, dict) or set(entry) != {"find", "replace"}
+                    or not isinstance(entry["find"], str) or not entry["find"]
+                    or not isinstance(entry["replace"], str)):
+                raise MetadataError(f"{CLAUDE_OVERLAY}: {relative}#{index} needs string find and replace")
+            pairs.append((entry["find"], entry["replace"]))
+        edits[str(target)] = tuple(pairs)
+    return ClaudeOverlay(withheld_tools=dict(withheld), edits=edits)

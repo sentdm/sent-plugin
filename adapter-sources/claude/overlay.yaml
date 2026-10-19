@@ -1,0 +1,97 @@
+# Claude adapter overlay. generate_adapters.py applies it to claude-plugins/sent only;
+# the canonical package, repository root, and Codex adapter keep the full surface.
+#
+# It mirrors the Sent server's policy for hosted Claude connections. It is guidance,
+# not a security control: the server enforces the policy independently.
+#
+# withheld_tools: removed from the Claude adapter's public-surface.json.
+# edits: exact find/replace on generated Claude adapter files (paths relative to
+# claude-plugins/sent). Each find must match exactly once, so canonical edits that
+# invalidate an overlay fail generation instead of drifting silently.
+
+withheld_tools:
+  sender_profiles.create: Create Sender Profiles in the Sent Dashboard.
+  sender_profiles.delete: Delete Sender Profiles in the Sent Dashboard.
+
+edits:
+  skills/sent-profile-provisioning/SKILL.md:
+    - find: |-
+        description: Lists, inspects, creates, updates, and deletes Sender Profiles through Sent MCP tools and executes
+      replace: |-
+        description: Lists, inspects, and updates existing Sender Profiles through Sent MCP tools, hands Sender Profile creation and deletion to the Sent Dashboard, and executes
+    - find: |-
+        Use `sender_profiles.list`, `sender_profiles.get`, `sender_profiles.create`, `sender_profiles.update`, and `sender_profiles.delete` through client-managed OAuth 2.1/PKCE.
+      replace: |-
+        Use `sender_profiles.list`, `sender_profiles.get`, and `sender_profiles.update` through client-managed OAuth 2.1/PKCE.
+    - find: |-
+        - **Create:** requires `name`, `shortName`, and `idempotencyKey`. `shortName` is 3-11 letters, numbers, or spaces with at least one letter. Optional arguments are `description`, `smsCountry`, `smsNumberType`, `smsSenderValue`, `smsAreaCodes`, and `compliance`. A supplied `smsCountry` requires `smsNumberType`; omission uses the organization's shared routes. For a dedicated SMS market, use `sent-compliance` to inspect requirements and fill its setup plan first. Provisioning can claim a number and incur registration fees. WhatsApp, RCS, billing, document uploads, inheritance flags, and sandbox arguments are not exposed by this MCP create tool. Required document uploads block it before any write; use the dashboard or documented REST flow. No one-time API key is returned.
+      replace: |-
+        - **Create:** Sender Profiles are created in the Sent Dashboard, not from Claude, because provisioning can claim a number and incur registration fees. For a dedicated SMS market, use `sent-compliance` to explain the requirements, then hand the user to the Dashboard. If the connection lists `sender_profiles.create`, do not call it.
+    - find: |-
+        - **Delete:** fetch and preview the target. Explain that deletion can disconnect WhatsApp, release numbers, and disable live routes. Supply `id` and a nonempty `idempotencyKey`. `deleted: false` means no matching owned profile was deleted and does not prove another tenant's profile exists.
+      replace: |-
+        - **Delete:** Sender Profiles are deleted in the Sent Dashboard, not from Claude, because deletion can disconnect WhatsApp, release numbers, and disable live routes. If the connection lists `sender_profiles.delete`, do not call it.
+    - find: |-
+        For every create, update, or delete, preview
+      replace: |-
+        For every update, preview
+    - find: |-
+        Create and delete use durable receipts. Reuse the original key and arguments for the same intended operation; do not generate a new key after a timeout or an in-flight result. Inspect list/get and returned receipt guidance first. A key reused with different arguments is refused. If interrupted provisioning or teardown needs attention, stop and reconcile in the dashboard rather than retry automatically or replace the key. A new key authorizes a separate operation only after the existing outcome has been reconciled. Verify the returned profile and channel readiness; creation alone does not establish permission to send.
+      replace: |-
+        If provisioning or teardown started in the Dashboard looks incomplete, inspect it with list/get and reconcile it in the Dashboard. Profile creation alone does not establish permission to send.
+    - find: |-
+        The following `/v3/profiles` guidance describes the legacy REST lifecycle
+      replace: |-
+        From Claude, use the REST guidance below to write or review the user's application code; do not run profile-creating or profile-deleting requests on the user's behalf. The following `/v3/profiles` guidance describes the legacy REST lifecycle
+
+  skills/sent-compliance/SKILL.md:
+    - find: |-
+        3. Call `compliance.setup_plan` when the user needs the exact setup call. Its `call.tool` is `sender_profiles.create`, with camelCase argument names and null placeholders that must be filled before execution. Do not execute blank values or translate the plan into an invented REST call.
+      replace: |-
+        3. Call `compliance.setup_plan` when the user needs the setup steps for a market. From Claude, Sender Profiles are provisioned in the Sent Dashboard: present the plan's requirements, and when it returns a Dashboard handoff, give the user that link. If the plan contains a `call` that would create a Sender Profile, do not call `sender_profiles.create`; hand the setup to the Dashboard. Do not translate the plan into an invented REST call.
+    - find: |-
+        Required uploads cannot be carried through MCP; do not attempt a guaranteed-to-fail create.
+      replace: |-
+        Required uploads cannot be carried through MCP.
+    - find: |-
+        5. When setup can proceed, hand the completed plan to `sent-profile-provisioning` for scope validation, required idempotency key, payload preview, and explicit confirmation before creation.
+      replace: |-
+        5. When setup can proceed, direct the user to finish provisioning in the Sent Dashboard with the requirements you gathered.
+    - find: |-
+        The plan creates a new profile.
+      replace: |-
+        The plan describes a new profile, which the user creates in the Sent Dashboard.
+
+  skills/sent/SKILL.md:
+    - find: |-
+        | List, get, create, update, or delete owned Sender Profiles through MCP | `sent-profile-provisioning` |
+      replace: |-
+        | List, get, or update owned Sender Profiles through MCP, or hand creation and deletion to the Sent Dashboard | `sent-profile-provisioning` |
+
+  skills/sent-messaging/SKILL.md:
+    - find: |
+        Never call `messages.send` without the preview and explicit confirmation immediately before the call.
+      replace: |
+        Never call `messages.send` without the preview and explicit confirmation immediately before the call.
+
+        From Claude, send to exactly one recipient per call. Do not loop over a list or split recipients across repeated calls to reach many people; for bulk or campaign sends, direct the user to the Sent Dashboard or the REST API in their own application. If Sent returns a connection-policy or send-quota error, stop and report it with any retry time; do not retry automatically.
+
+  skills/sms-10dlc-registration/SKILL.md:
+    - find: |-
+        Its plan creates a new Sender Profile and does not manage campaigns on an existing profile.
+      replace: |-
+        From Claude, its plan is completed by creating the Sender Profile in the Sent Dashboard; it does not manage campaigns on an existing profile.
+
+  README.md:
+    - find: |-
+        - Sender Profiles: `sender_profiles.list`, `.get`, `.create`, `.update`, and `.delete`; and
+      replace: |-
+        - Sender Profiles: `sender_profiles.list`, `.get`, and `.update`, with creation and deletion in the Sent Dashboard; and
+    - find: |-
+        The public MCP surface includes 27 tools.
+      replace: |-
+        The public MCP surface includes 27 tools; this Claude plugin documents the 25 available to Claude connections.
+    - find: |-
+        Profile create and delete require `idempotencyKey`; interrupted outcomes require reconciliation before another operation. MCP update changes only name, short name, or description. Compliance setup plans create a new profile, support SMS only, and hand required document uploads to the dashboard or REST API.
+      replace: |-
+        Sender Profiles are created and deleted in the Sent Dashboard. MCP update changes only name, short name, or description. Compliance setup plans describe a new SMS profile and hand provisioning and required document uploads to the Dashboard.

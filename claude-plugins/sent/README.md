@@ -37,7 +37,7 @@ npx skills add https://github.com/sentdm/sent-plugin --skill sent
 
 ## MCP and authorization
 
-The adapter connects only to `https://mcp.sent.dm/mcp`. The MCP client performs OAuth 2.1 with PKCE and Dynamic Client Registration; no credentials or credential placeholders are included. The grant is tied to the organization and Sender Profile selected during authorization. An organization grant can use a schema-supported `profileId` to act as an owned profile; profile grants cannot. `sender_profiles.*` uses target `id` and rejects acting `profileId`. Reauthorize for another organization or scope outside the grant and revoke access from **Sent Dashboard → Settings → MCP Connections**.
+The adapter connects only to `https://mcp.sent.dm/mcp`. The MCP client performs OAuth 2.1 with PKCE and Dynamic Client Registration; no credentials or credential placeholders are included. The grant is tied to the organization and Sender Profile selected during authorization. An organization grant can use a schema-supported `profileId` to act as an owned profile; profile grants cannot. `sender_profiles.*` uses target `id` and rejects acting `profileId`. Reauthorize for another organization or scope outside the grant and revoke access by deactivating the connection's API key in **Sent Dashboard → API Keys**.
 
 MCP-backed live operations cover:
 
@@ -47,7 +47,7 @@ MCP-backed live operations cover:
 - analytics: number lookup, message volume, deliverability, and contact metrics; and
 - account: account details, balance, and onboarding status;
 - feedback: user-authorized reports to Sent with `feedback.send`;
-- Sender Profiles: `sender_profiles.list`, `.get`, `.create`, `.update`, and `.delete`; and
+- Sender Profiles: `sender_profiles.list`, `.get`, and `.update`, with creation and deletion in the Sent Dashboard; and
 - SMS compliance: `compliance.requirements` and `compliance.setup_plan`.
 
 Mutating workflows preview the exact scope and payload, then require explicit confirmation immediately before execution. They do not retry ambiguous sends blindly and do not equate an accepted message with delivery.
@@ -60,11 +60,13 @@ This directory is generated. Make source changes in `packages/sent` or `adapter-
 
 ## Additional MCP behavior
 
-The public MCP surface includes 27 tools. `messages.send` uses an existing template with all required parameters; it supports `scheduledAt` with an explicit timezone offset, from 1 minute to 30 days ahead. Acceptance is not delivery, and quiet hours can defer release.
+The public MCP surface includes 27 tools; this Claude plugin documents the 25 available to Claude connections. `messages.send` uses an existing template with all required parameters; it supports `scheduledAt` with an explicit timezone offset, from 1 minute to 30 days ahead. Acceptance is not delivery, and quiet hours can defer release.
+
+Connections authorized through Claude's hosted connector (Claude on the web, Desktop, mobile, and Cowork) get a server-enforced policy: Sender Profile creation and deletion are unavailable and happen in the Sent Dashboard, each `messages.send` call accepts one recipient, and organization-wide send quotas apply. Other clients, including Claude Code, keep the full surface.
 
 Feedback goes to Sent staff only with user authorization and a reviewed, sanitized report. It is limited to 2000 characters and 20 calls per authenticated account scope per UTC day, shared across acting profiles. Its note does not guarantee storage, open a support ticket, or promise a response. Number lookup is paid and limited to 1000 calls per authenticated account scope per UTC day.
 
-Profile create and delete require `idempotencyKey`; interrupted outcomes require reconciliation before another operation. MCP update changes only name, short name, or description. Compliance setup plans create a new profile, support SMS only, and hand required document uploads to the dashboard or REST API.
+Sender Profiles are created and deleted in the Sent Dashboard. MCP update changes only name, short name, or description. Compliance setup plans describe a new SMS profile and hand provisioning and required document uploads to the Dashboard.
 
 Dashboard volume counts delivered/read outbound SMS and WhatsApp over supported windows; deliverability is an all-time outbound percentage including SENT, and contacts is a current total. Do not claim unsupported date filters or trends.
 

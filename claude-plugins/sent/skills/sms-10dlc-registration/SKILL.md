@@ -7,7 +7,7 @@ description: Prepares and validates Sent US A2P 10DLC brand and campaign registr
 
 Use this skill for US A2P SMS over 10-digit long codes. Separate the compliance evidence packet from the exact Sent API request; they have different schemas and validators.
 
-For current field and document requirements or an exact SMS setup call, use `sent-compliance` before preparing the registration evidence here. Its plan creates a new Sender Profile and does not manage campaigns on an existing profile.
+For current field and document requirements or an exact SMS setup call, use `sent-compliance` before preparing the registration evidence here. From Claude, its plan is completed by creating the Sender Profile in the Sent Dashboard; it does not manage campaigns on an existing profile.
 
 ## Current Sent resource model
 

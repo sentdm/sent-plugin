@@ -103,7 +103,7 @@ The plugin declares the Streamable HTTP endpoint `https://mcp.sent.dm/mcp` and e
 | Sender Profiles | `sender_profiles.list`, `sender_profiles.get`, `sender_profiles.create`, `sender_profiles.update`, `sender_profiles.delete` |
 | SMS compliance | `compliance.requirements`, `compliance.setup_plan` |
 
-The MCP client performs OAuth 2.1 authorization with PKCE and Dynamic Client Registration. The user selects an organization and Sender Profile during authorization; the client stores the resulting grant. An organization grant can use a schema-supported `profileId` to act as an owned profile; profile grants cannot. `sender_profiles.*` uses target `id` and rejects acting `profileId`. Reauthorize for another organization or scope outside the grant and revoke access from **Sent Dashboard → Settings → MCP Connections**. Do not paste API keys or tokens into prompts.
+The MCP client performs OAuth 2.1 authorization with PKCE and Dynamic Client Registration. The user selects an organization and Sender Profile during authorization; the client stores the resulting grant. An organization grant can use a schema-supported `profileId` to act as an owned profile; profile grants cannot. `sender_profiles.*` uses target `id` and rejects acting `profileId`. Reauthorize for another organization or scope outside the grant and revoke access by deactivating the connection's API key in **Sent Dashboard → API Keys**. Do not paste API keys or tokens into prompts.
 
 ## Mutation and data-safety contract
 
@@ -161,6 +161,8 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the public-data policy, [`docs/PUBL
 ## Additional MCP behavior
 
 The public MCP surface includes 27 tools. `messages.send` uses an existing template with all required parameters; it supports `scheduledAt` with an explicit timezone offset, from 1 minute to 30 days ahead. Acceptance is not delivery, and quiet hours can defer release.
+
+Connections authorized through Claude's hosted connector (Claude on the web, Desktop, mobile, and Cowork) get a server-enforced policy: Sender Profile creation and deletion are unavailable and happen in the Sent Dashboard, each `messages.send` call accepts one recipient, and organization-wide send quotas apply. Other clients, including Claude Code, keep the full surface.
 
 Feedback goes to Sent staff only with user authorization and a reviewed, sanitized report. It is limited to 2000 characters and 20 calls per authenticated account scope per UTC day, shared across acting profiles. Its note does not guarantee storage, open a support ticket, or promise a response. Number lookup is paid and limited to 1000 calls per authenticated account scope per UTC day.
 
