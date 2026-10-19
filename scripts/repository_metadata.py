@@ -161,6 +161,10 @@ def load_claude_overlay(root: Path, metadata: RepositoryMetadata) -> ClaudeOverl
         def construct_mapping(self, node, deep=False):  # type: ignore[override]
             seen: set[Any] = set()
             for key_node, _ in node.value:
+                # Merge keys (`<<: *anchor`) are flattened by the parent and have no constructor here;
+                # a non-scalar key is malformed and is left for the parent to report.
+                if key_node.tag == "tag:yaml.org,2002:merge" or not isinstance(key_node, yaml.ScalarNode):
+                    continue
                 key = self.construct_object(key_node, deep=deep)
                 if key in seen:
                     raise yaml.constructor.ConstructorError(

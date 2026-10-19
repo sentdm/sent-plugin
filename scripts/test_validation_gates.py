@@ -322,6 +322,21 @@ def claude_withheld_tool_in_readme(root: Path) -> None:
     edit_claude_overlay(root, change)
 
 
+def claude_withheld_tool_bare_negation(root: Path) -> None:
+    """A bare "not" or "never" in the sentence is not a do-not-call instruction."""
+    def change(overlay: dict) -> None:
+        overlay["edits"]["README.md"][0]["replace"] += (
+            " If no profile exists, it is not optional: create one with `sender_profiles.create`.")
+    edit_claude_overlay(root, change)
+
+
+def claude_withheld_tool_negated_filler(root: Path) -> None:
+    """"Do not skip calling" instructs the call; the negation must sit on the verb itself."""
+    def change(overlay: dict) -> None:
+        overlay["edits"]["README.md"][0]["replace"] += " Do not skip calling `sender_profiles.create`."
+    edit_claude_overlay(root, change)
+
+
 def claude_withheld_tool_in_command(root: Path) -> None:
     """Slash commands ship with the adapter and are agent instructions too; the gate reads the shipped file."""
     path = root / "claude-plugins" / "sent" / ".claude" / "commands" / "sent.md"
@@ -350,6 +365,8 @@ CASES: tuple[tuple[str, Mutation, str], ...] = (
     ("Claude withheld-tool instruction", claude_withheld_tool_instruction, "outside a do-not-call instruction"),
     ("Claude withheld-tool after a prohibition", claude_withheld_tool_after_prohibition, "outside a do-not-call instruction"),
     ("Claude withheld-tool in README", claude_withheld_tool_in_readme, "outside a do-not-call instruction"),
+    ("Claude withheld-tool under a bare negation", claude_withheld_tool_bare_negation, "outside a do-not-call instruction"),
+    ("Claude withheld-tool under a negated filler verb", claude_withheld_tool_negated_filler, "outside a do-not-call instruction"),
     ("Claude withheld-tool in a command", claude_withheld_tool_in_command, "outside a do-not-call instruction"),
     ("duplicate Claude overlay path", duplicate_claude_overlay_path, "found duplicate key"),
     ("colliding Claude overlay path", colliding_claude_overlay_path, "collides with an earlier entry"),
