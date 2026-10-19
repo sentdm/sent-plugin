@@ -38,7 +38,7 @@ For aggregate trends, funnels, or root-cause analysis across many delivery recor
 
 Never call `messages.send` without the preview and explicit confirmation immediately before the call.
 
-From Claude, send to exactly one recipient per call. Do not loop over a list or split recipients across repeated calls to reach many people; for bulk or campaign sends, direct the user to the Sent Dashboard or the REST API in their own application. If Sent returns a connection-policy or send-quota error, stop and report it with any retry time; do not retry automatically.
+From Claude, send to exactly one recipient per call. Do not loop over a list or split recipients across repeated calls to reach many people; for bulk or campaign sends, direct the user to the Sent Dashboard or the REST API in their own application. Sent refuses MARKETING-category templates on Claude connections: check the template's category from `templates.list` or `templates.get` before the preview, and for a MARKETING template direct the user to the Dashboard or the REST API instead of choosing a different template on their behalf. If Sent returns a connection-policy or send-quota error, stop and report it with any retry time; do not retry automatically.
 
 ## Schedule a send
 
