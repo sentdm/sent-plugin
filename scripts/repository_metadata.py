@@ -155,9 +155,28 @@ def load_claude_overlay(root: Path, metadata: RepositoryMetadata) -> ClaudeOverl
     """Load the Claude-only tool withholding and text edits applied to claude-plugins/sent."""
     import yaml
 
+    class UniqueKeyLoader(yaml.SafeLoader):
+        """PyYAML keeps the last of two equal keys; here that would drop a whole block of edits unnoticed."""
+
+        def construct_mapping(self, node, deep=False):  # type: ignore[override]
+            seen: set[Any] = set()
+            for key_node, _ in node.value:
+                # Merge keys (`<<: *anchor`) are flattened by the parent and have no constructor here;
+                # a non-scalar key is malformed and is left for the parent to report.
+                if key_node.tag == "tag:yaml.org,2002:merge" or not isinstance(key_node, yaml.ScalarNode):
+                    continue
+                key = self.construct_object(key_node, deep=deep)
+                if key in seen:
+                    raise yaml.constructor.ConstructorError(
+                        "while constructing a mapping", node.start_mark,
+                        f"found duplicate key {key!r}", key_node.start_mark,
+                    )
+                seen.add(key)
+            return super().construct_mapping(node, deep=deep)
+
     path = root / CLAUDE_OVERLAY
     try:
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw = yaml.load(path.read_text(encoding="utf-8"), Loader=UniqueKeyLoader)
     except (OSError, yaml.YAMLError) as exc:
         raise MetadataError(f"could not read {CLAUDE_OVERLAY}: {exc}") from exc
     if not isinstance(raw, dict) or set(raw) != {"withheld_tools", "edits"}:
@@ -189,5 +208,9 @@ def load_claude_overlay(root: Path, metadata: RepositoryMetadata) -> ClaudeOverl
                     or not isinstance(entry["replace"], str)):
                 raise MetadataError(f"{CLAUDE_OVERLAY}: {relative}#{index} needs string find and replace")
             pairs.append((entry["find"], entry["replace"]))
+        # Two spellings of one path (`./skills/x` and `skills/x`) normalise to the same key, and the
+        # second would silently replace the first.
+        if str(target) in edits:
+            raise MetadataError(f"{CLAUDE_OVERLAY}: edit path {relative!r} collides with an earlier entry for {target}")
         edits[str(target)] = tuple(pairs)
     return ClaudeOverlay(withheld_tools=dict(withheld), edits=edits)

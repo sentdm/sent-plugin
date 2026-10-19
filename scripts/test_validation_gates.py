@@ -307,11 +307,69 @@ def claude_withheld_tool_instruction(root: Path) -> None:
     edit_claude_overlay(root, change)
 
 
+def claude_withheld_tool_after_prohibition(root: Path) -> None:
+    """The line already says "do not call"; a later clause instructs the call anyway."""
+    def change(overlay: dict) -> None:
+        overlay["edits"]["skills/sent-compliance/SKILL.md"][0]["replace"] += (
+            " Otherwise call `sender_profiles.create` with the plan.")
+    edit_claude_overlay(root, change)
+
+
+def claude_withheld_tool_in_readme(root: Path) -> None:
+    """README.md ships with the adapter but sat outside the old skills-only scan."""
+    def change(overlay: dict) -> None:
+        overlay["edits"]["README.md"][0]["replace"] += " Call `sender_profiles.delete` to remove one."
+    edit_claude_overlay(root, change)
+
+
+def claude_withheld_tool_bare_negation(root: Path) -> None:
+    """A bare "not" or "never" in the sentence is not a do-not-call instruction."""
+    def change(overlay: dict) -> None:
+        overlay["edits"]["README.md"][0]["replace"] += (
+            " If no profile exists, it is not optional: create one with `sender_profiles.create`.")
+    edit_claude_overlay(root, change)
+
+
+def claude_withheld_tool_negated_filler(root: Path) -> None:
+    """"Do not skip calling" instructs the call; the negation must sit on the verb itself."""
+    def change(overlay: dict) -> None:
+        overlay["edits"]["README.md"][0]["replace"] += " Do not skip calling `sender_profiles.create`."
+    edit_claude_overlay(root, change)
+
+
+def claude_withheld_tool_in_command(root: Path) -> None:
+    """Slash commands ship with the adapter and are agent instructions too; the gate reads the shipped file."""
+    path = root / "claude-plugins" / "sent" / ".claude" / "commands" / "sent.md"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write("\nThen call `sender_profiles.create` with the plan.\n")
+
+
+def duplicate_claude_overlay_path(root: Path) -> None:
+    """PyYAML would keep only the second block and drop the first without a word."""
+    path = root / "adapter-sources/claude/overlay.yaml"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write("\n  skills/sent/SKILL.md:\n    - find: anything\n      replace: anything else\n")
+
+
+def colliding_claude_overlay_path(root: Path) -> None:
+    """A second spelling of an existing path normalises onto it and would replace its edits."""
+    path = root / "adapter-sources/claude/overlay.yaml"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write("\n  ./skills/sent/SKILL.md:\n    - find: anything\n      replace: anything else\n")
+
+
 CASES: tuple[tuple[str, Mutation, str], ...] = (
     ("stale Claude overlay edit", stale_claude_overlay_find, "matched 0 times"),
     ("unknown Claude withheld tool", unknown_claude_withheld_tool, "is not in the canonical public surface"),
     ("Claude retained-tool confirmation", removed_claude_confirmation, "Claude adapter sent-profile-provisioning"),
     ("Claude withheld-tool instruction", claude_withheld_tool_instruction, "outside a do-not-call instruction"),
+    ("Claude withheld-tool after a prohibition", claude_withheld_tool_after_prohibition, "outside a do-not-call instruction"),
+    ("Claude withheld-tool in README", claude_withheld_tool_in_readme, "outside a do-not-call instruction"),
+    ("Claude withheld-tool under a bare negation", claude_withheld_tool_bare_negation, "outside a do-not-call instruction"),
+    ("Claude withheld-tool under a negated filler verb", claude_withheld_tool_negated_filler, "outside a do-not-call instruction"),
+    ("Claude withheld-tool in a command", claude_withheld_tool_in_command, "outside a do-not-call instruction"),
+    ("duplicate Claude overlay path", duplicate_claude_overlay_path, "found duplicate key"),
+    ("colliding Claude overlay path", colliding_claude_overlay_path, "collides with an earlier entry"),
     ("ambient credential reads", ambient_credential_read, "public gate rejected ambient credential read"),
     ("Claude privacy policy listing", missing_claude_privacy_url, "Claude privacyPolicyUrl must match"),
     ("independent mutation confirmation policy", disabled_profile_confirmation, "independent safety policy"),
