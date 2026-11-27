@@ -18,6 +18,8 @@
 | `PUBLIC_SERVICE_ANNOUNCEMENT` | Public-interest or government notices |
 | `LOW_VOLUME` | Low-volume mixed traffic |
 
+These are the REST values. The MCP `compliance` map takes the `options` `compliance.requirements` publishes instead.
+
 Select what the business will actually send. Do not use `MIXED` or `LOW_VOLUME` to hide a dominant high-risk use case.
 
 ## Sample rules

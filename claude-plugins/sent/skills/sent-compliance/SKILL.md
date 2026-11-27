@@ -15,7 +15,7 @@ The optional `profileId` selector is available only for an organization's owned 
 
 ## Interpret requirements and plan
 
-1. Call `compliance.requirements` for the selected market. Preserve required flags, conditional rules, options, item fields, sender pattern, and attachment field names.
+1. Call `compliance.requirements` for the selected market. Preserve required flags, conditional rules, options, item fields, sender pattern, and attachment field names. The setup plan's `compliance` value takes exactly these keys and option values, never REST field names or values.
 2. Check `hasRegime` before interpreting an empty requirements list. An empty list with a published regime can mean no fields are demanded; `hasRegime: false` means no schema is published and is not proof that no compliance is required. US `TOLL_FREE` numbers require toll-free verification before production traffic, even when no requirements are returned; never tell the user that a toll-free number needs no registration.
 3. Call `compliance.setup_plan` when the user needs the setup steps for a market. From Claude, Sender Profiles are provisioned in the Sent Dashboard: present the plan's requirements, and when it returns a Dashboard handoff, give the user that link. If the plan contains a `call` that would create a Sender Profile, do not call `sender_profiles.create`; hand the setup to the Dashboard. Do not translate the plan into an invented REST call.
 4. If `canCompleteHere` is false, report `blocker` and `attachments`, then hand off document submission to the Sent dashboard or the documented multipart REST workflow. Required uploads cannot be carried through MCP. Optional attachment fields alone do not necessarily block creation.

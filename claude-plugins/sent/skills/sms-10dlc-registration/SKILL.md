@@ -5,7 +5,13 @@ description: Prepares and validates Sent US A2P 10DLC brand and campaign registr
 
 # SMS 10DLC Registration
 
-Use this skill for US A2P SMS over 10-digit long codes. Separate the compliance evidence packet from the exact Sent API request; they have different schemas and validators.
+Use this skill for US A2P SMS over 10-digit long codes. Keep three shapes apart; they have different field names and use-case values:
+
+| Shape | Used for | Field names | 2FA use case | `MIXED` / `LOW_VOLUME` |
+| --- | --- | --- | --- | --- |
+| Evidence packet | Internal readiness review | snake_case, versioned | `TWO_FA` | allowed |
+| MCP `compliance` map | The setup plan from `sent-compliance` | snake_case | `2FA` | refused; volume decides |
+| REST campaign request | `/v3/profiles/{profileId}/campaigns` | camelCase in a `campaign` wrapper | `TWO_FA` | allowed |
 
 For current field and document requirements or an exact SMS setup call, use `sent-compliance` before preparing the registration evidence here. From Claude, its plan is completed by creating the Sender Profile in the Sent Dashboard; it does not manage campaigns on an existing profile.
 
@@ -29,7 +35,7 @@ Reject guidance that reintroduces a free-standing brand path.
 
 Inherited campaigns are read-only. A profile cannot supply `brand` while brand inheritance is true.
 
-## Two validation layers
+## Evidence and requests
 
 ### Evidence readiness packet
 
@@ -41,9 +47,13 @@ python scripts/validate_10dlc_packet.py evidence.json
 
 Collect legal identity, public website/policy links, consent proof, message flow, opt-in/opt-out/help responses and keywords, use cases, and realistic samples. See [references/10dlc-evidence-checklist.md](references/10dlc-evidence-checklist.md).
 
-### Sent campaign request
+### MCP compliance map
 
-The API request uses exact camelCase and a `campaign` wrapper:
+Through Sent MCP, the registration uses exactly the keys, `options`, and limits `compliance.requirements` publishes for US `TEN_DLC`, which is the shape of the setup plan's `compliance` value; never put REST field names or values in it. Each key's notes name the TCR field it fills. For use cases, `TWO_FA` is published as `2FA`, and `MIXED` and `LOW_VOLUME` are refused because Sent derives them from `volume`, so list each kind of traffic as its own entry. No local validator checks this shape.
+
+### REST campaign request
+
+The REST request uses exact camelCase and a `campaign` wrapper:
 
 <!-- sent-campaign-request -->
 ```json
@@ -81,9 +91,9 @@ Validate it with:
 python scripts/validate_campaign_payload.py campaign.json
 ```
 
-## API use cases
+## REST API use cases
 
-Support all 13 current values:
+The REST campaign request supports all 13 current values:
 
 `MARKETING`, `ACCOUNT_NOTIFICATION`, `CUSTOMER_CARE`, `FRAUD_ALERT`, `TWO_FA`, `DELIVERY_NOTIFICATION`, `SECURITY_ALERT`, `M2M`, `MIXED`, `HIGHER_EDUCATION`, `POLLING_VOTING`, `PUBLIC_SERVICE_ANNOUNCEMENT`, and `LOW_VOLUME`.
 
@@ -101,8 +111,8 @@ Campaign responses currently expose statuses `SENT_CREATED`, `ACTIVE`, and `EXPI
 2. Select brand/campaign inheritance.
 3. Validate the versioned evidence packet.
 4. Create or confirm the profile brand.
-5. Translate evidence into the exact camelCase campaign request.
-6. Validate locally and use `sandbox: true`.
+5. Through MCP, fill the `compliance` map as described above. Through REST, translate evidence into the exact camelCase campaign request.
+6. For REST, validate locally and use `sandbox: true`.
 7. Show the payload and obtain confirmation before a real create/update/delete.
 8. Store profile ID, campaign ID, `submittedToTCR`, raw status, and review evidence.
 9. Complete the profile with required `webHookUrl` only after prerequisites are ready.
