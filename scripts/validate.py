@@ -1046,7 +1046,7 @@ def validate_adapters(validation: Validation) -> None:
     validation.check(claude_manifest.get("name") == "sent", "Claude manifest name mismatch")
     validation.check(claude_manifest.get("version") == VERSION, "Claude manifest version mismatch")
     validation.check(claude_manifest.get("skills") == "./skills", "Claude skills path mismatch")
-    validation.check(claude_manifest.get("commands") == "./.claude/commands", "Claude command path mismatch")
+    validation.check("commands" not in claude_manifest, "Claude commands must use the default commands/ folder")
     validation.check(claude_manifest.get("mcpServers") == "./.mcp.json", "Claude MCP path mismatch")
     listing = load_json(MARKETPLACE_CONTENT)
     for field, source in (("documentationUrl", "website_url"), ("supportUrl", "support_url"),
@@ -1065,7 +1065,7 @@ def validate_adapters(validation: Validation) -> None:
         validation.check(claude_entries[0].get("name") == "sent", "Claude marketplace plugin name mismatch")
         validation.check(claude_entries[0].get("source") == "./claude-plugins/sent", "Claude marketplace source mismatch")
 
-    commands = list((ROOT / "claude-plugins" / "sent" / ".claude" / "commands").glob("*.md"))
+    commands = list((ROOT / "claude-plugins" / "sent" / "commands").glob("*.md"))
     validation.check(len(commands) == 8, f"Claude adapter must retain eight command shims; found {len(commands)}")
     for command in commands:
         command_text = command.read_text(encoding="utf-8")
