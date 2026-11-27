@@ -18,3 +18,6 @@ cases:
   - query: "Why is our SMS throughput so low even after we registered our brand?"
     expect: ambiguous
     rationale: Could be vetting-score / campaign-throttle (sms-10dlc-registration) or per-cohort delivery analysis (messaging-performance-analyzer). Start with messaging-performance-analyzer to localize whether throttling is the broken stage, then route here if the diagnosis is TCR vetting or campaign misclassification.
+  - query: "compliance.setup_plan gave me a US 10DLC plan — how do I fill its compliance map for a 2FA and account-notification campaign?"
+    expect: trigger
+    rationale: Filling the MCP compliance map is campaign content; the skill sends the agent to the published keys and options and explains the 2FA spelling and why MIXED is refused.

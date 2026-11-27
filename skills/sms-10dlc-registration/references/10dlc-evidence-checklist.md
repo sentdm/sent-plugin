@@ -43,4 +43,6 @@ use_cases[].messaging_use_case_us -> useCases[].messagingUseCaseUs
 use_cases[].sample_messages   -> useCases[].sampleMessages
 ```
 
+These names are for the REST request. The MCP `compliance` map uses the keys `compliance.requirements` publishes instead.
+
 Run the evidence validator before translation and the campaign validator after translation.
