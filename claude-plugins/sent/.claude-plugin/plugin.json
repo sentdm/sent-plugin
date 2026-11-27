@@ -40,7 +40,6 @@
   "supportUrl": "https://www.sent.dm/en/company/contact-support",
   "privacyPolicyUrl": "https://www.sent.dm/en/legal/privacy-policy",
   "termsOfServiceUrl": "https://www.sent.dm/en/legal/terms-of-service",
-  "commands": "./.claude/commands",
   "skills": "./skills",
   "mcpServers": "./.mcp.json"
 }

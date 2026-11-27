@@ -109,7 +109,7 @@ def build(output_root: Path, source_root: Path = ROOT) -> None:
     copy_tree(package / "assets", codex_root / "assets")
     copy_tree(package / "skills", claude_root / "skills")
     copy_tree(package / "assets", claude_root / "assets")
-    copy_tree(commands, claude_root / ".claude" / "commands")
+    copy_tree(commands, claude_root / "commands")
     for adapter_root in (codex_root, claude_root):
         shutil.copy2(adapter_readme, adapter_root / "README.md")
         shutil.copy2(package / "LICENSE", adapter_root / "LICENSE")
@@ -149,7 +149,6 @@ def build(output_root: Path, source_root: Path = ROOT) -> None:
         "supportUrl": marketplace["support_url"],
         "privacyPolicyUrl": marketplace["privacy_policy_url"],
         "termsOfServiceUrl": marketplace["terms_of_service_url"],
-        "commands": "./.claude/commands",
         "skills": "./skills",
         "mcpServers": "./.mcp.json",
     }

@@ -339,7 +339,7 @@ def claude_withheld_tool_negated_filler(root: Path) -> None:
 
 def claude_withheld_tool_in_command(root: Path) -> None:
     """Slash commands ship with the adapter and are agent instructions too; the gate reads the shipped file."""
-    path = root / "claude-plugins" / "sent" / ".claude" / "commands" / "sent.md"
+    path = root / "claude-plugins" / "sent" / "commands" / "sent.md"
     with path.open("a", encoding="utf-8") as handle:
         handle.write("\nThen call `sender_profiles.create` with the plan.\n")
 
