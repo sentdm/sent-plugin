@@ -91,9 +91,9 @@ edits:
         3. From Claude, prepare the answers `compliance.requirements` asks for from the evidence and hand the user to the Sent Dashboard to submit them. Do not prepare or confirm a create.
   skills/sms-10dlc-registration/references/10dlc-rejection-remediation.md:
     - find: |-
-        Through MCP, re-read `compliance.requirements` and correct the `compliance` map; MCP has no sandbox.
+        Through MCP, retry only a create that was refused before anything was written: re-read `compliance.requirements`, correct the `compliance` map, and confirm again; MCP has no sandbox. A rejection of a profile or campaign that already exists is fixed on that profile through the REST campaign endpoints or the Sent Dashboard, never with another create.
       replace: |-
-        From Claude, re-read `compliance.requirements` and have the user correct the answers in the Sent Dashboard.
+        From Claude, re-read `compliance.requirements` and have the user correct the answers in the Sent Dashboard, on the existing profile when one was already created.
 
   README.md:
     - find: |-

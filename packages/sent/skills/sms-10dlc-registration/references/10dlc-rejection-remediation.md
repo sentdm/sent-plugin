@@ -30,6 +30,6 @@ Do not create a new campaign until the failing layer is known.
 
 1. Save the original response and reason.
 2. Fix the versioned evidence packet if necessary.
-3. Through REST, rebuild and validate the API request and use `sandbox: true`. Through MCP, re-read `compliance.requirements` and correct the `compliance` map; MCP has no sandbox.
+3. Through REST, rebuild and validate the API request and use `sandbox: true`. Through MCP, retry only a create that was refused before anything was written: re-read `compliance.requirements`, correct the `compliance` map, and confirm again; MCP has no sandbox. A rejection of a profile or campaign that already exists is fixed on that profile through the REST campaign endpoints or the Sent Dashboard, never with another create.
 4. Show the exact diff.
 5. Obtain confirmation before the real mutation.

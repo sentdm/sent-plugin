@@ -30,6 +30,6 @@ Do not create a new campaign until the failing layer is known.
 
 1. Save the original response and reason.
 2. Fix the versioned evidence packet if necessary.
-3. Through REST, rebuild and validate the API request and use `sandbox: true`. From Claude, re-read `compliance.requirements` and have the user correct the answers in the Sent Dashboard.
+3. Through REST, rebuild and validate the API request and use `sandbox: true`. From Claude, re-read `compliance.requirements` and have the user correct the answers in the Sent Dashboard, on the existing profile when one was already created.
 4. Show the exact diff.
 5. Obtain confirmation before the real mutation.
