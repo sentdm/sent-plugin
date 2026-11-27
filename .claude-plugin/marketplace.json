@@ -12,7 +12,7 @@
     {
       "name": "sent",
       "source": "./claude-plugins/sent",
-      "description": "Official Sent plugin for SMS, WhatsApp, RCS, scheduled template sends, Sender Profiles, SMS compliance, authorized feedback, contacts, analytics, API integration, webhooks, routing, and migration.",
+      "description": "Send and manage SMS, WhatsApp, and RCS messages with Sent. Register US A2P 10DLC brands and campaigns, author WhatsApp templates, launch RCS agents, build webhooks, analyze deliverability, and migrate from other messaging providers.",
       "category": "Productivity"
     }
   ]

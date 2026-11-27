@@ -1,7 +1,7 @@
 {
   "display_name": "Sent",
-  "short_description": "Business messaging workflows",
-  "long_description": "Use Sent MCP operations for safe account, contact, template, analytics, and messaging workflows. Focused specialist skills add API integration, webhook engineering, contact-aware routing, two-way messaging, Sender Profile architecture and provisioning, CPaaS migration, delivery diagnosis, US A2P 10DLC, WhatsApp Business, RCS launch readiness, and cross-channel template design.",
+  "short_description": "SMS, WhatsApp & RCS messaging",
+  "long_description": "Send SMS, WhatsApp, and RCS messages and manage contacts, templates, Sender Profiles, and analytics through the Sent MCP server. Specialist skills cover US A2P 10DLC registration, WhatsApp Business (WABA) templates and embedded signup, RCS agent launch, webhook receivers with signature verification, channel routing, two-way messaging, delivery diagnosis, SDK integration, and staged migration from another CPaaS provider.",
   "developer_name": "Sent",
   "category": "Productivity",
   "capabilities": [
