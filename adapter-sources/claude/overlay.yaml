@@ -81,6 +81,19 @@ edits:
         Its plan creates a new Sender Profile and does not manage campaigns on an existing profile.
       replace: |-
         From Claude, its plan is completed by creating the Sender Profile in the Sent Dashboard; it does not manage campaigns on an existing profile.
+    - find: |-
+        Through Sent MCP, the registration uses exactly the keys, `options`, and limits `compliance.requirements` publishes for US `TEN_DLC`, which is the shape of the setup plan's `compliance` value; never put REST field names or values in it.
+      replace: |-
+        From Claude, the registration is submitted in the Sent Dashboard. Prepare the user's answers with exactly the keys, `options`, and limits `compliance.requirements` publishes for US `TEN_DLC`; never use REST field names or values for them.
+    - find: |-
+        3. Through MCP, fill the setup plan's `compliance` map from the evidence; `inherit` on `brand` and `campaign` is the inheritance choice. Hand the completed plan to `sent-profile-provisioning`, which previews it and obtains confirmation before the one create that makes the profile and its registration. Do not create a profile or brand first; MCP has no sandbox.
+      replace: |-
+        3. From Claude, prepare the answers `compliance.requirements` asks for from the evidence and hand the user to the Sent Dashboard to submit them. Do not prepare or confirm a create.
+  skills/sms-10dlc-registration/references/10dlc-rejection-remediation.md:
+    - find: |-
+        Through MCP, re-read `compliance.requirements` and correct the `compliance` map; MCP has no sandbox.
+      replace: |-
+        From Claude, re-read `compliance.requirements` and have the user correct the answers in the Sent Dashboard.
 
   README.md:
     - find: |-

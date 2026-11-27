@@ -5,7 +5,8 @@
 | Layer | Evidence |
 | --- | --- |
 | Local evidence packet | Version, missing consent proof, invalid URLs, incomplete autoresponses |
-| Sent request validation | Wrong camelCase, unsupported field, invalid use case, sample count/length, volume type |
+| Sent REST request validation | Wrong camelCase, unsupported field, invalid use case, sample count/length, volume type |
+| Sent MCP `compliance` map | A key, option, or limit `compliance.requirements` does not publish, such as a REST field name, `TWO_FA`, `MIXED`, or `LOW_VOLUME` |
 | TCR submission | `submittedToTCR`, registry error/reason, brand or campaign status |
 | Carrier operations | Campaign active but filtering, DCA election, content mismatch |
 
@@ -13,9 +14,9 @@ Do not create a new campaign until the failing layer is known.
 
 ## Common fixes
 
-- Wrong endpoint model: operate campaigns under the profile and create a dedicated brand within profile creation.
-- Inheritance conflict: disable `inherit_tcr_campaign` before managing a dedicated campaign; do not supply `brand` while brand inheritance is true.
-- Wrong field casing: serialize `useCases`, `messagingUseCaseUs`, and `sampleMessages` exactly.
+- Wrong endpoint model (REST): operate campaigns under the profile and create a dedicated brand within profile creation.
+- Inheritance conflict (REST): disable `inherit_tcr_campaign` before managing a dedicated campaign; do not supply `brand` while brand inheritance is true.
+- Wrong field casing (REST): serialize `useCases`, `messagingUseCaseUs`, and `sampleMessages` exactly. The MCP map takes the keys and options `compliance.requirements` publishes instead.
 - Too few samples: provide 1–5 structurally; provide at least two for marketing/mixed compliance.
 - Weak opt-in: add observable proof and a complete message flow.
 - Autoresponse failure: add brand, STOP/HELP, unsubscribe confirmation, and support details as applicable.
@@ -29,7 +30,6 @@ Do not create a new campaign until the failing layer is known.
 
 1. Save the original response and reason.
 2. Fix the versioned evidence packet if necessary.
-3. Rebuild and validate the API request.
-4. Use `sandbox: true`.
-5. Show the exact diff.
-6. Obtain confirmation before the real mutation.
+3. Through REST, rebuild and validate the API request and use `sandbox: true`. From Claude, re-read `compliance.requirements` and have the user correct the answers in the Sent Dashboard.
+4. Show the exact diff.
+5. Obtain confirmation before the real mutation.

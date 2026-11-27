@@ -108,13 +108,15 @@ Campaign responses currently expose statuses `SENT_CREATED`, `ACTIVE`, and `EXPI
 ## Safe workflow
 
 1. Confirm this is US A2P 10DLC traffic and the actual sending business is identified.
-2. Select brand/campaign inheritance.
-3. Validate the versioned evidence packet.
-4. Create or confirm the profile brand.
-5. Through MCP, fill the `compliance` map as described above. Through REST, translate evidence into the exact camelCase campaign request.
-6. For REST, validate locally and use `sandbox: true`.
-7. Show the payload and obtain confirmation before a real create/update/delete.
-8. Store profile ID, campaign ID, `submittedToTCR`, raw status, and review evidence.
-9. Complete the profile with required `webHookUrl` only after prerequisites are ready.
+2. Validate the versioned evidence packet.
+3. Through MCP, fill the setup plan's `compliance` map from the evidence; `inherit` on `brand` and `campaign` is the inheritance choice. Hand the completed plan to `sent-profile-provisioning`, which previews it and obtains confirmation before the one create that makes the profile and its registration. Do not create a profile or brand first; MCP has no sandbox.
+4. Through REST:
+   1. Select brand/campaign inheritance.
+   2. Create or confirm the profile brand.
+   3. Translate evidence into the exact camelCase campaign request.
+   4. Validate locally and use `sandbox: true`.
+   5. Show the payload and obtain confirmation before a real create/update/delete.
+   6. Store profile ID, campaign ID, `submittedToTCR`, raw status, and review evidence.
+   7. Complete the profile with required `webHookUrl` only after prerequisites are ready.
 
 Never use real consumer data in fixtures or samples. Use [references/tcr-use-cases.md](references/tcr-use-cases.md) for classification and [references/10dlc-rejection-remediation.md](references/10dlc-rejection-remediation.md) for failures.

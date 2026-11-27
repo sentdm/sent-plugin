@@ -49,7 +49,7 @@ Collect legal identity, public website/policy links, consent proof, message flow
 
 ### MCP compliance map
 
-Through Sent MCP, the registration uses exactly the keys, `options`, and limits `compliance.requirements` publishes for US `TEN_DLC`, which is the shape of the setup plan's `compliance` value; never put REST field names or values in it. Each key's notes name the TCR field it fills. For use cases, `TWO_FA` is published as `2FA`, and `MIXED` and `LOW_VOLUME` are refused because Sent derives them from `volume`, so list each kind of traffic as its own entry. No local validator checks this shape.
+From Claude, the registration is submitted in the Sent Dashboard. Prepare the user's answers with exactly the keys, `options`, and limits `compliance.requirements` publishes for US `TEN_DLC`; never use REST field names or values for them. Each key's notes name the TCR field it fills. For use cases, `TWO_FA` is published as `2FA`, and `MIXED` and `LOW_VOLUME` are refused because Sent derives them from `volume`, so list each kind of traffic as its own entry. No local validator checks this shape.
 
 ### REST campaign request
 
@@ -108,13 +108,15 @@ Campaign responses currently expose statuses `SENT_CREATED`, `ACTIVE`, and `EXPI
 ## Safe workflow
 
 1. Confirm this is US A2P 10DLC traffic and the actual sending business is identified.
-2. Select brand/campaign inheritance.
-3. Validate the versioned evidence packet.
-4. Create or confirm the profile brand.
-5. Through MCP, fill the `compliance` map as described above. Through REST, translate evidence into the exact camelCase campaign request.
-6. For REST, validate locally and use `sandbox: true`.
-7. Show the payload and obtain confirmation before a real create/update/delete.
-8. Store profile ID, campaign ID, `submittedToTCR`, raw status, and review evidence.
-9. Complete the profile with required `webHookUrl` only after prerequisites are ready.
+2. Validate the versioned evidence packet.
+3. From Claude, prepare the answers `compliance.requirements` asks for from the evidence and hand the user to the Sent Dashboard to submit them. Do not prepare or confirm a create.
+4. Through REST:
+   1. Select brand/campaign inheritance.
+   2. Create or confirm the profile brand.
+   3. Translate evidence into the exact camelCase campaign request.
+   4. Validate locally and use `sandbox: true`.
+   5. Show the payload and obtain confirmation before a real create/update/delete.
+   6. Store profile ID, campaign ID, `submittedToTCR`, raw status, and review evidence.
+   7. Complete the profile with required `webHookUrl` only after prerequisites are ready.
 
 Never use real consumer data in fixtures or samples. Use [references/tcr-use-cases.md](references/tcr-use-cases.md) for classification and [references/10dlc-rejection-remediation.md](references/10dlc-rejection-remediation.md) for failures.
